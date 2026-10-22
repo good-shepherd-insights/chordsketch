@@ -309,7 +309,7 @@ export function ChordProEditor({
 
   const sourcePane = (
     <div className={`${SLUG}-chord-pro-editor__source-pane`}>
-      {insertToolbar ? <InsertToolbar editorRef={editorRef} /> : null}
+      {insertToolbar ? <InsertToolbar editorRef={editorRef} source={source} /> : null}
       <ChordSourceArea
         ref={editorRef}
         value={source}

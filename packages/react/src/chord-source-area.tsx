@@ -72,6 +72,12 @@ export interface ChordSourceAreaHandle {
    * source mutation (e.g. drag-and-drop chord reposition).
    */
   setCaret(offset: number): void;
+  /**
+   * Replace the characters in `[from, to)` with `text` as a user
+   * edit: fires `onChange`, like {@link insertAtCursor}. Offsets are
+   * clamped to the document.
+   */
+  replaceRange(from: number, to: number, text: string): void;
 }
 
 /** Props accepted by {@link ChordSourceArea}. */
@@ -524,6 +530,14 @@ export const ChordSourceArea = forwardRef<ChordSourceAreaHandle, ChordSourceArea
           if (!view) return;
           const clamped = Math.max(0, Math.min(view.state.doc.length, offset));
           view.dispatch({ selection: { anchor: clamped } });
+        },
+        replaceRange(from: number, to: number, text: string) {
+          const view = viewRef.current;
+          if (!view) return;
+          const len = view.state.doc.length;
+          const a = Math.max(0, Math.min(len, from));
+          const b = Math.max(a, Math.min(len, to));
+          view.dispatch({ changes: { from: a, to: b, insert: text } });
         },
       }),
       [],

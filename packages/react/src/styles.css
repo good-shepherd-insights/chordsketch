@@ -2908,6 +2908,46 @@
   outline-offset: 1px;
 }
 
+.visionschool-insert-toolbar__divider {
+  width: 1px;
+  height: 20px;
+  margin: 0 4px;
+  background: var(--cs-border-strong, #D4D1D6);
+}
+.visionschool-insert-toolbar__toggle {
+  min-width: 32px;
+  justify-content: center;
+  font-weight: 700;
+}
+.visionschool-insert-toolbar__toggle[aria-pressed="true"] {
+  border-color: var(--cs-accent-500, #243472);
+  background: var(--cs-accent-500, #243472);
+  color: #FFFFFF;
+}
+.visionschool-insert-toolbar__colour {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 6px;
+  border: 1px solid var(--cs-border-strong, #D4D1D6);
+  border-radius: 6px;
+  background: var(--cs-surface, #FFFFFF);
+}
+.visionschool-insert-toolbar__colour select {
+  border: 0;
+  background: transparent;
+  color: var(--cs-text-primary, #0A0A0B);
+  font: inherit;
+  font-size: 0.8125rem;
+}
+.visionschool-insert-toolbar__swatch {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  background: #000000;
+}
+
 .visionschool-chord-pro-editor__preview-pane {
   display: block;
 }

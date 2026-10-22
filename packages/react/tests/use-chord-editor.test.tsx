@@ -45,6 +45,7 @@ function Harness({
       setValue: vi.fn(),
       insertAtCursor: vi.fn(),
       setCaret: setCaretSpy,
+      replaceRange: vi.fn(),
     };
   }
   latest = useChordEditor({

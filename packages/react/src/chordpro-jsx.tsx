@@ -3259,7 +3259,13 @@ function emptyElementStyle(): ElementStyle {
  * `style={…}` prop in that case. */
 function elementStyleToCss(style: ElementStyle): CSSProperties | null {
   const css: CSSProperties = {};
-  if (style.font) css.fontFamily = sanitizeCssValue(style.font);
+  if (style.font) {
+    // The PDF renderer draws a font directive by its weight and style
+    // ("bold" / "italic" / "oblique" in the name); the preview follows.
+    css.fontFamily = sanitizeCssValue(style.font);
+    css.fontWeight = /bold/i.test(style.font) ? 700 : 400;
+    css.fontStyle = /italic|oblique/i.test(style.font) ? 'italic' : 'normal';
+  }
   if (style.size) {
     const safe = sanitizeCssValue(style.size);
     if (/^\d+(\.\d+)?$/.test(safe)) {
