@@ -1603,7 +1603,8 @@ fn draw_label(text: &str, doc: &mut PdfDocument) {
         // Helvetica's underline: 100/1000 em below the baseline, 50/1000 thick.
         let x = doc.margin_left();
         let y = doc.y() - size * 0.1;
-        let width = font_text_width(text, font, size);
+        // Never past the column (or the page's right margin).
+        let width = font_text_width(text, font, size).min(doc.column_width());
         doc.line_at(x, y, x + width, y, size * 0.05);
     }
     doc.newline(size + LINE_GAP);
@@ -3095,6 +3096,12 @@ struct PdfDocument {
     images: Vec<EmbeddedImage>,
     /// Fonts, spacing and label style, from the config.
     style: PdfStyle,
+    /// Gap between columns in points, from `pdf.columns.gap`.
+    column_gap: f32,
+    /// Where columns start on the current page: the position of the
+    /// `{columns}` directive, so a heading above it is not overlapped; the
+    /// page's top margin on a new page.
+    column_top: f32,
     /// Page size in points, from `pdf.papersize` (A4 when unset).
     page_w: f32,
     page_h: f32,
@@ -3140,6 +3147,8 @@ impl PdfDocument {
         Self {
             pages: vec![Vec::new()],
             style: PdfStyle::default(),
+            column_gap: COLUMN_GAP,
+            column_top: PAGE_H - top,
             page_w: PAGE_W,
             page_h: PAGE_H,
             y: PAGE_H - top,
@@ -3259,10 +3268,28 @@ impl PdfDocument {
         let mut doc = Self::with_margins(top, bottom, left, right);
         let (page_w, page_h) = Self::page_size(config, warnings);
         doc.style = PdfStyle::from_config(config, warnings);
+        doc.column_gap = Self::column_gap_from(config, warnings);
         doc.page_w = page_w;
         doc.page_h = page_h;
         doc.y = page_h - top;
+        doc.column_top = doc.y;
         doc
+    }
+
+    /// The gap between columns from `pdf.columns.gap`, in points
+    /// (0..=[`MAX_SPACING`]); [`COLUMN_GAP`] when unset or invalid.
+    fn column_gap_from(config: &Config, warnings: &mut Vec<String>) -> f32 {
+        match config.get_path("pdf.columns.gap").as_f64() {
+            Some(v) if (0.0..=f64::from(MAX_SPACING)).contains(&v) => v as f32,
+            Some(v) => {
+                push_warning(
+                    warnings,
+                    format!("invalid pdf.columns.gap {v}, using {COLUMN_GAP}"),
+                );
+                COLUMN_GAP
+            }
+            None => COLUMN_GAP,
+        }
     }
 
     /// The page size from `pdf.papersize`: `"a4"`, `"letter"` or `"legal"`
@@ -3324,8 +3351,12 @@ impl PdfDocument {
             .as_f64()
             .map(|v| Self::validate_margin(v as f32, MARGIN_RIGHT, "right", warnings))
             .unwrap_or(MARGIN_RIGHT);
+        // The song's own fonts, spacing and column gap, like its margins.
+        self.style = PdfStyle::from_config(config, warnings);
+        self.column_gap = Self::column_gap_from(config, warnings);
         if self.pages.last().is_some_and(Vec::is_empty) {
             self.y = self.page_h - self.margin_top;
+            self.column_top = self.y;
         }
     }
 
@@ -3345,7 +3376,7 @@ impl PdfDocument {
             return self.margin_left;
         }
         let col_width = self.column_width();
-        let result = self.margin_left + self.current_column as f32 * (col_width + COLUMN_GAP);
+        let result = self.margin_left + self.current_column as f32 * (col_width + self.column_gap);
         debug_assert!(
             result.is_finite(),
             "margin_left() produced non-finite value"
@@ -3362,7 +3393,7 @@ impl PdfDocument {
         if self.num_columns <= 1 {
             return usable_width;
         }
-        let total_gaps = (self.num_columns - 1) as f32 * COLUMN_GAP;
+        let total_gaps = (self.num_columns - 1) as f32 * self.column_gap;
         ((usable_width - total_gaps) / self.num_columns as f32).max(0.0)
     }
 
@@ -3370,6 +3401,8 @@ impl PdfDocument {
     fn set_columns(&mut self, n: u32) {
         self.num_columns = n.clamp(1, MAX_COLUMNS);
         self.current_column = 0;
+        // Columns begin here, below whatever came before the directive.
+        self.column_top = self.y;
     }
 
     /// Force a column break. Advances to the next column, or to a new page
@@ -3381,7 +3414,7 @@ impl PdfDocument {
         }
         if self.current_column + 1 < self.num_columns {
             self.current_column += 1;
-            self.y = self.page_h - self.margin_top;
+            self.y = self.column_top;
         } else {
             self.new_page();
         }
@@ -3399,7 +3432,7 @@ impl PdfDocument {
     fn next_column_or_page(&mut self) {
         if self.num_columns > 1 && self.current_column + 1 < self.num_columns {
             self.current_column += 1;
-            self.y = self.page_h - self.margin_top;
+            self.y = self.column_top;
         } else {
             self.new_page();
         }
@@ -3415,6 +3448,7 @@ impl PdfDocument {
         }
         self.pages.push(Vec::new());
         self.y = self.page_h - self.margin_top;
+        self.column_top = self.y;
         self.current_column = 0;
     }
 
@@ -3761,6 +3795,7 @@ impl PdfDocument {
         let pages = std::mem::take(&mut self.pages);
         self.pages.push(Vec::new());
         self.y = self.page_h - self.margin_top;
+        self.column_top = self.y;
         self.current_column = 0;
         pages
     }
