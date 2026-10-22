@@ -267,13 +267,33 @@ struct PdfElementStyle {
 }
 
 /// Formatting state for PDF rendering.
-#[derive(Default, Clone)]
+#[derive(Clone)]
 struct PdfFormattingState {
     text: PdfElementStyle,
     chord: PdfElementStyle,
+    /// Lyrics and chord sizes when no `{textsize}` / `{chordsize}` is in
+    /// effect: the document style's (`pdf.fonts.text` / `pdf.fonts.chord`).
+    base_text: f32,
+    base_chord: f32,
+}
+
+impl Default for PdfFormattingState {
+    fn default() -> Self {
+        Self::with_base(LYRICS_SIZE, CHORD_SIZE)
+    }
 }
 
 impl PdfFormattingState {
+    /// A state with no size directives yet, falling back to these sizes.
+    fn with_base(base_text: f32, base_chord: f32) -> Self {
+        Self {
+            text: PdfElementStyle::default(),
+            chord: PdfElementStyle::default(),
+            base_text,
+            base_chord,
+        }
+    }
+
     /// Apply a formatting directive, updating the appropriate style.
     fn apply(&mut self, kind: &DirectiveKind, value: &Option<String>) {
         let size_val = parse_font_size(value.as_deref());
@@ -286,12 +306,210 @@ impl PdfFormattingState {
 
     /// Get the effective lyrics font size.
     fn lyrics_size(&self) -> f32 {
-        self.text.size.unwrap_or(LYRICS_SIZE)
+        self.text.size.unwrap_or(self.base_text)
     }
 
     /// Get the effective chord font size.
     fn chord_size(&self) -> f32 {
-        self.chord.size.unwrap_or(CHORD_SIZE)
+        self.chord.size.unwrap_or(self.base_chord)
+    }
+}
+
+/// One element's font: a built-in Type1 face and a size in points.
+#[derive(Clone, Copy)]
+struct FontSpec {
+    font: Font,
+    size: f32,
+}
+
+/// The document's typography, spacing and label style, read from the config:
+/// `pdf.fonts.{title,subtitle,text,chord,comment,meta,label}` (`name` and
+/// `size`), `pdf.spacing.{lyrics,chords,empty}`, `pdf.labels.underline`,
+/// `pdf.labels.type_prefix` and `pdf.formats.key`. Every default equals the
+/// constant the renderer used before these keys were read, so a document
+/// without them renders exactly as before.
+#[derive(Clone)]
+struct PdfStyle {
+    title: FontSpec,
+    subtitle: FontSpec,
+    /// Lyrics (and body text outside verbatim sections).
+    text: FontSpec,
+    chord: FontSpec,
+    comment: FontSpec,
+    /// The `{key}` / `{tempo}` / `{time}` lines.
+    meta: FontSpec,
+    /// Section names (`Verse`, `Chorus 1`) and chorus recalls.
+    label: FontSpec,
+    /// Gap after a lyrics line, in points.
+    lyrics_gap: f32,
+    /// Gap between a chord row and its lyrics row, in points.
+    chord_gap: f32,
+    /// Height of an empty source line, in points.
+    empty_line: f32,
+    /// Gaps after the title, a subtitle and a `{key}`/`{tempo}`/`{time}`
+    /// line, in points (`pdf.spacing.after_title` / `after_subtitle` /
+    /// `after_meta`). May be negative, down to −the line's size, to pull the
+    /// next line up.
+    after_title: f32,
+    after_subtitle: f32,
+    after_meta: f32,
+    /// Underline section names.
+    label_underline: bool,
+    /// Show a labelled section as `Type: label` (`Chorus: Chorus 1`); when
+    /// false, the label alone (`Chorus 1`).
+    label_type_prefix: bool,
+    /// The `{key}` line. `%{key}` is the canonical spelled-out key
+    /// (`A minor`), `%{key_short}` the key as written (`Am`), both transposed.
+    key_format: String,
+}
+
+impl Default for PdfStyle {
+    fn default() -> Self {
+        Self {
+            title: FontSpec {
+                font: Font::HelveticaBold,
+                size: TITLE_SIZE,
+            },
+            subtitle: FontSpec {
+                font: Font::Helvetica,
+                size: SUBTITLE_SIZE,
+            },
+            text: FontSpec {
+                font: Font::Helvetica,
+                size: LYRICS_SIZE,
+            },
+            chord: FontSpec {
+                font: Font::HelveticaBold,
+                size: CHORD_SIZE,
+            },
+            comment: FontSpec {
+                font: Font::HelveticaOblique,
+                size: COMMENT_SIZE,
+            },
+            meta: FontSpec {
+                font: Font::HelveticaOblique,
+                size: COMMENT_SIZE,
+            },
+            label: FontSpec {
+                font: Font::HelveticaBoldOblique,
+                size: SECTION_SIZE,
+            },
+            lyrics_gap: LINE_GAP,
+            chord_gap: CHORD_ROW_GAP,
+            empty_line: LINE_GAP * 2.0,
+            after_title: LINE_GAP,
+            after_subtitle: LINE_GAP,
+            after_meta: LINE_GAP,
+            label_underline: false,
+            label_type_prefix: true,
+            key_format: "Key: %{key}".to_string(),
+        }
+    }
+}
+
+/// Largest font size accepted from `pdf.fonts.*.size`, in points.
+const MAX_FONT_SIZE: f32 = 200.0;
+/// Largest spacing accepted from `pdf.spacing.*`, in points.
+const MAX_SPACING: f32 = 200.0;
+
+impl PdfStyle {
+    /// The style from `config`, warning about (and ignoring) values that are
+    /// out of range or name a font the PDF cannot draw.
+    fn from_config(config: &Config, warnings: &mut Vec<String>) -> Self {
+        let base = Self::default();
+        let font = |key: &str, default: FontSpec, warnings: &mut Vec<String>| -> FontSpec {
+            let node = config.get_path(&format!("pdf.fonts.{key}"));
+            let mut spec = default;
+            if let Some(name) = node.get("name").as_str() {
+                match Font::from_base_name(name) {
+                    Some(f) => spec.font = f,
+                    None => push_warning(
+                        warnings,
+                        format!(
+                            "pdf.fonts.{key}.name {name:?} is not a built-in PDF font, using the default"
+                        ),
+                    ),
+                }
+            }
+            if let Some(size) = node.get("size").as_f64() {
+                let size = size as f32;
+                if size.is_finite() && size > 0.0 && size <= MAX_FONT_SIZE {
+                    spec.size = size;
+                } else {
+                    push_warning(
+                        warnings,
+                        format!("invalid pdf.fonts.{key}.size {size}, using the default"),
+                    );
+                }
+            }
+            spec
+        };
+        let spacing = |key: &str, default: f32, warnings: &mut Vec<String>| -> f32 {
+            match config.get_path(&format!("pdf.spacing.{key}")).as_f64() {
+                Some(v) if (0.0..=f64::from(MAX_SPACING)).contains(&v) => v as f32,
+                Some(v) => {
+                    push_warning(
+                        warnings,
+                        format!("invalid pdf.spacing.{key} {v}, using the default"),
+                    );
+                    default
+                }
+                None => default,
+            }
+        };
+        let title = font("title", base.title, warnings);
+        let subtitle = font("subtitle", base.subtitle, warnings);
+        let meta = font("meta", base.meta, warnings);
+        // A gap after a header line; negative down to minus that line's size.
+        let after = |key: &str, default: f32, line: f32, warnings: &mut Vec<String>| -> f32 {
+            match config.get_path(&format!("pdf.spacing.{key}")).as_f64() {
+                Some(v)
+                    if v.is_finite() && v >= -f64::from(line) && v <= f64::from(MAX_SPACING) =>
+                {
+                    v as f32
+                }
+                Some(v) => {
+                    push_warning(
+                        warnings,
+                        format!("invalid pdf.spacing.{key} {v}, using the default"),
+                    );
+                    default
+                }
+                None => default,
+            }
+        };
+        Self {
+            after_title: after("after_title", base.after_title, title.size, warnings),
+            after_subtitle: after(
+                "after_subtitle",
+                base.after_subtitle,
+                subtitle.size,
+                warnings,
+            ),
+            after_meta: after("after_meta", base.after_meta, meta.size, warnings),
+            title,
+            subtitle,
+            text: font("text", base.text, warnings),
+            chord: font("chord", base.chord, warnings),
+            comment: font("comment", base.comment, warnings),
+            meta,
+            label: font("label", base.label, warnings),
+            lyrics_gap: spacing("lyrics", base.lyrics_gap, warnings),
+            chord_gap: spacing("chords", base.chord_gap, warnings),
+            empty_line: spacing("empty", base.empty_line, warnings),
+            label_underline: config
+                .get_path("pdf.labels.underline")
+                .as_bool()
+                .unwrap_or(base.label_underline),
+            label_type_prefix: config
+                .get_path("pdf.labels.type_prefix")
+                .as_bool()
+                .unwrap_or(base.label_type_prefix),
+            key_format: config
+                .get_path("pdf.formats.key")
+                .as_str()
+                .map_or(base.key_format, str::to_string),
+        }
     }
 }
 
@@ -327,6 +545,8 @@ const LYRICS_SIZE: f32 = 11.0;
 const SECTION_SIZE: f32 = 10.0;
 /// Comment font size.
 const COMMENT_SIZE: f32 = 9.0;
+/// Gap between a chord row and its lyrics row (`pdf.spacing.chords`).
+const CHORD_ROW_GAP: f32 = 2.0;
 /// Spacing between lines.
 const LINE_GAP: f32 = 4.0;
 /// Gap (pt) between the chord-name title baseline and the grid top in the
@@ -465,6 +685,38 @@ fn char_width(c: char) -> f32 {
 #[must_use]
 fn text_width(s: &str, font_size: f32) -> f32 {
     s.chars().map(|c| char_width(c) * font_size).sum()
+}
+
+/// Per-character width as a fraction of font size for Helvetica-Bold, from
+/// the standard Helvetica-Bold AFM (ASCII 32–126, divided by 1000). Other
+/// characters use the regular-weight width.
+#[must_use]
+fn bold_char_width(c: char) -> f32 {
+    #[rustfmt::skip]
+    const WIDTHS: [u16; 95] = [
+        278, 333, 474, 556, 556, 889, 722, 238, 333, 333, 389, 584, 278, 333, 278, 278,
+        556, 556, 556, 556, 556, 556, 556, 556, 556, 556, 333, 333, 584, 584, 584, 611,
+        975, 722, 722, 722, 722, 667, 611, 778, 722, 278, 556, 722, 611, 833, 722, 778,
+        667, 778, 722, 667, 611, 722, 667, 944, 667, 667, 611, 333, 278, 333, 584, 556,
+        333, 556, 611, 556, 611, 556, 333, 611, 611, 278, 278, 556, 278, 889, 611, 611,
+        611, 611, 389, 556, 333, 611, 556, 778, 556, 556, 500, 389, 280, 389, 584,
+    ];
+    match c as u32 {
+        code @ 32..=126 => f32::from(WIDTHS[(code - 32) as usize]) / 1000.0,
+        _ => char_width(c),
+    }
+}
+
+/// Text width in points for `font`: Helvetica-Bold and Helvetica-BoldOblique
+/// use the bold widths, every other face the regular ones.
+#[must_use]
+fn font_text_width(s: &str, font: Font, font_size: f32) -> f32 {
+    match font {
+        Font::HelveticaBold | Font::HelveticaBoldOblique => {
+            s.chars().map(|c| bold_char_width(c) * font_size).sum()
+        }
+        _ => text_width(s, font_size),
+    }
 }
 
 /// Table of Contents entry font size.
@@ -752,7 +1004,7 @@ fn render_song_into_doc(
     // displayed chord names match the shapes a guitarist holds at fret N.
     // The base config transpose is already folded into cli_transpose by the caller.
     let mut transpose = SongTranspose::new(song, cli_transpose, warnings);
-    let mut fmt_state = PdfFormattingState::default();
+    let mut fmt_state = PdfFormattingState::with_base(doc.style.text.size, doc.style.chord.size);
 
     // Read configurable frets_shown for chord diagrams.
     let diagram_frets = config.get_path("diagrams.frets").as_f64().map_or(
@@ -788,13 +1040,15 @@ fn render_song_into_doc(
 
     // Title
     if let Some(title) = &song.metadata.title {
-        doc.text(title, Font::HelveticaBold, TITLE_SIZE);
-        doc.newline(TITLE_SIZE + LINE_GAP);
+        let FontSpec { font, size } = doc.style.title;
+        doc.text(title, font, size);
+        doc.newline(size + doc.style.after_title);
     }
     // Subtitles
     for subtitle in &song.metadata.subtitles {
-        doc.text(subtitle, Font::Helvetica, SUBTITLE_SIZE);
-        doc.newline(SUBTITLE_SIZE + LINE_GAP);
+        let FontSpec { font, size } = doc.style.subtitle;
+        doc.text(subtitle, font, size);
+        doc.newline(size + doc.style.after_subtitle);
     }
 
     // Controls whether chord diagrams are rendered. Set by {diagrams: off/on}.
@@ -918,7 +1172,23 @@ fn render_song_into_doc(
                                 prefer_flat,
                             )
                             .unwrap_or_else(|| value.to_string());
-                            format!("Key: {}", unicode_accidentals(&displayed))
+                            // The key as written (`Am`), transposed like a
+                            // chord name and spelled as the chords are.
+                            let short = if transpose_offset == 0 {
+                                value.to_string()
+                            } else {
+                                transpose_chord_with_style(
+                                    &chordsketch_chordpro::ast::Chord::new(value),
+                                    transpose_offset,
+                                    prefer_flat,
+                                )
+                                .display_name()
+                                .to_string()
+                            };
+                            doc.style
+                                .key_format
+                                .replace("%{key_short}", &short)
+                                .replace("%{key}", &unicode_accidentals(&displayed))
                         }
                         DirectiveKind::Tempo => {
                             // Append the Italian tempo marking when
@@ -934,8 +1204,9 @@ fn render_song_into_doc(
                         DirectiveKind::Time => format!("Time: {value}"),
                         _ => unreachable!(),
                     };
-                    doc.text(&line, Font::HelveticaOblique, COMMENT_SIZE);
-                    doc.newline(COMMENT_SIZE + LINE_GAP);
+                    let FontSpec { font, size } = doc.style.meta;
+                    doc.text(&line, font, size);
+                    doc.newline(size + doc.style.after_meta);
                 }
             }
             Line::Directive(d) if !d.kind.is_metadata() => {
@@ -1079,7 +1350,7 @@ fn render_song_into_doc(
             }
             Line::Empty => {
                 chorus.record(line);
-                doc.newline(LINE_GAP * 2.0);
+                doc.newline(doc.style.empty_line);
             }
             _ => {}
         }
@@ -1153,22 +1424,25 @@ fn render_lyrics(
     let body_font = if verbatim {
         Font::Courier
     } else {
-        Font::Helvetica
+        doc.style.text.font
     };
+    let chord_font = doc.style.chord.font;
+    let lyrics_gap = doc.style.lyrics_gap;
+    let chord_gap = doc.style.chord_gap;
 
     if !lyrics.has_chords() {
-        doc.ensure_space(lyrics_size + LINE_GAP);
+        doc.ensure_space(lyrics_size + lyrics_gap);
         if has_markup {
             render_lyrics_spans(lyrics, lyrics_size, doc);
         } else {
             doc.text(&lyrics.text(), body_font, lyrics_size);
         }
-        doc.newline(lyrics_size + LINE_GAP);
+        doc.newline(lyrics_size + lyrics_gap);
         return;
     }
 
     // Need space for chord row + lyrics row
-    doc.ensure_space(chord_size + 2.0 + lyrics_size + LINE_GAP);
+    doc.ensure_space(chord_size + chord_gap + lyrics_size + lyrics_gap);
 
     // Chord row
     let mut x = doc.margin_left();
@@ -1186,7 +1460,7 @@ fn render_lyrics(
             }
         });
         if let Some(ref name) = chord_display {
-            doc.text_at(name, Font::HelveticaBold, chord_size, x, start_y);
+            doc.text_at(name, chord_font, chord_size, x, start_y);
         }
         let text_w = text_width(&seg.text, lyrics_size);
         let chord_w = chord_display
@@ -1195,14 +1469,20 @@ fn render_lyrics(
         x += text_w.max(chord_w);
     }
 
-    // Lyrics row
-    doc.advance_y(chord_size + 2.0);
+    // Lyrics row. A chord-bearing line in a verbatim section has always
+    // been set in Helvetica (only chord-less verbatim lines use Courier).
+    doc.advance_y(chord_size + chord_gap);
     if has_markup {
         render_lyrics_spans(lyrics, lyrics_size, doc);
     } else {
-        doc.text(&lyrics.text(), Font::Helvetica, lyrics_size);
+        let lyric_font = if verbatim {
+            Font::Helvetica
+        } else {
+            doc.style.text.font
+        };
+        doc.text(&lyrics.text(), lyric_font, lyrics_size);
     }
-    doc.newline(lyrics_size + LINE_GAP);
+    doc.newline(lyrics_size + lyrics_gap);
 }
 
 /// Render lyrics line with inline markup using font changes.
@@ -1303,13 +1583,30 @@ fn render_span_list(
 fn render_section_label(directive: &chordsketch_chordpro::ast::Directive, doc: &mut PdfDocument) {
     if let Some(heading) = directive.section_heading() {
         let text = match heading.value {
-            Some(v) if !v.is_empty() => format!("{}: {v}", heading.label),
+            Some(v) if !v.is_empty() && doc.style.label_type_prefix => {
+                format!("{}: {v}", heading.label)
+            }
+            Some(v) if !v.is_empty() => v.to_string(),
             _ => heading.label.into_owned(),
         };
-        doc.ensure_space(SECTION_SIZE + LINE_GAP);
-        doc.text(&text, Font::HelveticaBoldOblique, SECTION_SIZE);
-        doc.newline(SECTION_SIZE + LINE_GAP);
+        draw_label(&text, doc);
     }
+}
+
+/// Draw a section name or chorus recall in the label style (font, size and
+/// underline from the document style), then move below it.
+fn draw_label(text: &str, doc: &mut PdfDocument) {
+    let FontSpec { font, size } = doc.style.label;
+    doc.ensure_space(size + LINE_GAP);
+    doc.text(text, font, size);
+    if doc.style.label_underline {
+        // Helvetica's underline: 100/1000 em below the baseline, 50/1000 thick.
+        let x = doc.margin_left();
+        let y = doc.y() - size * 0.1;
+        let width = font_text_width(text, font, size);
+        doc.line_at(x, y, x + width, y, size * 0.05);
+    }
+    doc.newline(size + LINE_GAP);
 }
 
 fn render_directive(
@@ -2250,12 +2547,13 @@ struct ChorusRecallCtx<'a> {
 
 fn render_chorus_recall(value: &Option<String>, ctx: &ChorusRecallCtx<'_>, doc: &mut PdfDocument) {
     let text = match value {
-        Some(v) if !v.is_empty() => format!("{}: {v}", DirectiveKind::CHORUS_LABEL),
+        Some(v) if !v.is_empty() && doc.style.label_type_prefix => {
+            format!("{}: {v}", DirectiveKind::CHORUS_LABEL)
+        }
+        Some(v) if !v.is_empty() => v.to_string(),
         _ => DirectiveKind::CHORUS_LABEL.to_string(),
     };
-    doc.ensure_space(SECTION_SIZE + LINE_GAP);
-    doc.text(&text, Font::HelveticaBoldOblique, SECTION_SIZE);
-    doc.newline(SECTION_SIZE + LINE_GAP);
+    draw_label(&text, doc);
 
     // Replay the stored chorus body lines.
     replay_chorus_body(ctx.chorus_body, &mut PdfReplay { ctx, doc });
@@ -2795,6 +3093,8 @@ struct PdfDocument {
     current_column: u32,
     /// Embedded images (JPEG or PNG).
     images: Vec<EmbeddedImage>,
+    /// Fonts, spacing and label style, from the config.
+    style: PdfStyle,
     /// Page size in points, from `pdf.papersize` (A4 when unset).
     page_w: f32,
     page_h: f32,
@@ -2839,6 +3139,7 @@ impl PdfDocument {
     fn with_margins(top: f32, bottom: f32, left: f32, right: f32) -> Self {
         Self {
             pages: vec![Vec::new()],
+            style: PdfStyle::default(),
             page_w: PAGE_W,
             page_h: PAGE_H,
             y: PAGE_H - top,
@@ -2957,6 +3258,7 @@ impl PdfDocument {
             .unwrap_or(MARGIN_RIGHT);
         let mut doc = Self::with_margins(top, bottom, left, right);
         let (page_w, page_h) = Self::page_size(config, warnings);
+        doc.style = PdfStyle::from_config(config, warnings);
         doc.page_w = page_w;
         doc.page_h = page_h;
         doc.y = page_h - top;
@@ -3899,6 +4201,20 @@ impl Font {
             Self::HelveticaBoldOblique => "/F4",
             Self::Courier => "/F6",
         }
+    }
+
+    /// The font a config names (`pdf.fonts.*.name`), by its PDF BaseFont
+    /// name; `None` for a font the renderer cannot draw.
+    fn from_base_name(name: &str) -> Option<Self> {
+        [
+            Self::Helvetica,
+            Self::HelveticaBold,
+            Self::HelveticaOblique,
+            Self::HelveticaBoldOblique,
+            Self::Courier,
+        ]
+        .into_iter()
+        .find(|f| f.base_name().eq_ignore_ascii_case(name))
     }
 
     /// Returns the PDF BaseFont name for the font dictionary.
