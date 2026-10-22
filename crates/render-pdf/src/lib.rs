@@ -257,13 +257,17 @@ fn pdf_title_hex_string(s: &str) -> String {
 // Formatting state
 // ---------------------------------------------------------------------------
 
-/// Tracks the current font size for an element type.
+/// Tracks the current font, size and colour for an element type.
 ///
-/// PDF Type1 fonts are limited to the Helvetica family, so font name changes
-/// from directives are not applicable. Size changes are applied directly.
+/// PDF Type1 fonts are limited to the Helvetica family (plus Courier), so a
+/// `{chordfont}` / `{textfont}` value is mapped onto that family by its
+/// weight and style; see [`font_from_directive`].
 #[derive(Default, Clone)]
 struct PdfElementStyle {
     size: Option<f32>,
+    font: Option<Font>,
+    /// RGB fill colour, each component in `0.0..=1.0`.
+    colour: Option<[f32; 3]>,
 }
 
 /// Formatting state for PDF rendering.
@@ -300,6 +304,18 @@ impl PdfFormattingState {
         match style_target(kind) {
             Some((StyleElement::Text, StyleProperty::Size)) => self.text.size = size_val,
             Some((StyleElement::Chord, StyleProperty::Size)) => self.chord.size = size_val,
+            Some((StyleElement::Text, StyleProperty::Font)) => {
+                self.text.font = value.as_deref().and_then(font_from_directive);
+            }
+            Some((StyleElement::Chord, StyleProperty::Font)) => {
+                self.chord.font = value.as_deref().and_then(font_from_directive);
+            }
+            Some((StyleElement::Text, StyleProperty::Colour)) => {
+                self.text.colour = value.as_deref().and_then(parse_colour);
+            }
+            Some((StyleElement::Chord, StyleProperty::Colour)) => {
+                self.chord.colour = value.as_deref().and_then(parse_colour);
+            }
             _ => {}
         }
     }
@@ -313,6 +329,76 @@ impl PdfFormattingState {
     fn chord_size(&self) -> f32 {
         self.chord.size.unwrap_or(self.base_chord)
     }
+}
+
+/// Map a `{chordfont}` / `{textfont}` value onto a drawable Type1 font.
+///
+/// An exact BaseFont name (`Helvetica-Bold`, `Courier`) is used as is. Any
+/// other name keeps its weight and style: a name containing `bold` draws
+/// bold, `italic` / `oblique` draws oblique, `courier` / `mono` draws
+/// Courier, and the rest draw Helvetica (metric-compatible with Arial).
+/// An empty value returns `None`, which resets to the configured font.
+fn font_from_directive(value: &str) -> Option<Font> {
+    let name = value.trim();
+    if name.is_empty() {
+        return None;
+    }
+    if let Some(font) = Font::from_base_name(name) {
+        return Some(font);
+    }
+    let lower = name.to_ascii_lowercase();
+    if lower.contains("courier") || lower.contains("mono") {
+        return Some(Font::Courier);
+    }
+    let bold = lower.contains("bold");
+    let oblique = lower.contains("italic") || lower.contains("oblique");
+    Some(match (bold, oblique) {
+        (true, true) => Font::HelveticaBoldOblique,
+        (true, false) => Font::HelveticaBold,
+        (false, true) => Font::HelveticaOblique,
+        (false, false) => Font::Helvetica,
+    })
+}
+
+/// Parse a `{chordcolour}` / `{textcolour}` value: `#RGB`, `#RRGGBB`, or a
+/// CSS basic colour keyword. `None` for an empty or unknown value, which
+/// draws in the default black.
+fn parse_colour(value: &str) -> Option<[f32; 3]> {
+    let v = value.trim().to_ascii_lowercase();
+    if let Some(hex) = v.strip_prefix('#') {
+        let digits: Vec<u8> = hex
+            .chars()
+            .map(|c| c.to_digit(16).map(|d| d as u8))
+            .collect::<Option<_>>()?;
+        let rgb = match digits.as_slice() {
+            [r, g, b] => [r * 17, g * 17, b * 17],
+            [r1, r2, g1, g2, b1, b2] => [r1 * 16 + r2, g1 * 16 + g2, b1 * 16 + b2],
+            _ => return None,
+        };
+        return Some(rgb.map(|c| f32::from(c) / 255.0));
+    }
+    // CSS Color Module Level 4, §6.1 basic colour keywords.
+    let rgb: [u8; 3] = match v.as_str() {
+        "black" => [0, 0, 0],
+        "silver" => [192, 192, 192],
+        "gray" | "grey" => [128, 128, 128],
+        "white" => [255, 255, 255],
+        "maroon" => [128, 0, 0],
+        "red" => [255, 0, 0],
+        "purple" => [128, 0, 128],
+        "fuchsia" | "magenta" => [255, 0, 255],
+        "green" => [0, 128, 0],
+        "lime" => [0, 255, 0],
+        "olive" => [128, 128, 0],
+        "yellow" => [255, 255, 0],
+        "navy" => [0, 0, 128],
+        "blue" => [0, 0, 255],
+        "teal" => [0, 128, 128],
+        "aqua" | "cyan" => [0, 255, 255],
+        "orange" => [255, 165, 0],
+        _ => return None,
+    };
+    Some(rgb.map(|c| f32::from(c) / 255.0))
 }
 
 /// One element's font: a built-in Type1 face and a size in points.
@@ -1437,7 +1523,8 @@ fn render_lyrics(
     } else {
         doc.style.text.font
     };
-    let chord_font = doc.style.chord.font;
+    let chord_font = fmt_state.chord.font.unwrap_or(doc.style.chord.font);
+    let chord_colour = fmt_state.chord.colour;
     let lyrics_gap = doc.style.lyrics_gap;
     let chord_gap = doc.style.chord_gap;
 
@@ -1481,7 +1568,19 @@ fn render_lyrics(
             }
         });
         if let Some(ref name) = chord_display {
-            doc.text_at(name, chord_font, chord_size, x, start_y);
+            match chord_colour {
+                Some([r, g, b]) => {
+                    doc.current_page_mut().push(format!(
+                        "{} {} {} rg",
+                        fmt_f32(r),
+                        fmt_f32(g),
+                        fmt_f32(b)
+                    ));
+                    doc.text_at(name, chord_font, chord_size, x, start_y);
+                    doc.current_page_mut().push("0 0 0 rg".to_string());
+                }
+                None => doc.text_at(name, chord_font, chord_size, x, start_y),
+            }
         }
         let text_w = text_width(&seg.text, lyrics_size);
         let chord_w = chord_display
