@@ -1441,9 +1441,10 @@ fn render_lyrics(
     let lyrics_gap = doc.style.lyrics_gap;
     let chord_gap = doc.style.chord_gap;
 
-    if !verbatim {
+    if !verbatim && !lyrics.has_chords() {
         // A line wider than its column is cut off by the page; count it so
         // the song can report it (and a caller can choose a smaller size).
+        // A chord-bearing line is measured with its chord row below.
         let lyric_w = font_text_width(&lyrics.text(), body_font, lyrics_size);
         if lyric_w > doc.column_width() + 0.5 {
             doc.overflowed_lines += 1;
@@ -1487,6 +1488,12 @@ fn render_lyrics(
             .as_ref()
             .map_or(0.0, |name| text_width(name, chord_size) + 2.0);
         x += text_w.max(chord_w);
+    }
+
+    // The chord row runs as far as its last chord or syllable; past the
+    // column's right edge it is cut off, like a lyric line.
+    if !verbatim && x > doc.margin_left() + doc.column_width() + 0.5 {
+        doc.overflowed_lines += 1;
     }
 
     // Lyrics row. A chord-bearing line in a verbatim section has always
