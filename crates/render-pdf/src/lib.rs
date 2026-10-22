@@ -1356,6 +1356,17 @@ fn render_song_into_doc(
         }
     }
 
+    if doc.overflowed_lines > 0 {
+        push_warning(
+            warnings,
+            format!(
+                "{} line(s) are wider than the column and are cut off; a smaller text size or fewer columns would fit them",
+                doc.overflowed_lines
+            ),
+        );
+        doc.overflowed_lines = 0;
+    }
+
     // Auto-inject diagram block when {diagrams} (or {diagrams: piano/guitar/ukulele/charango}) was seen.
     if let Some(ref instrument) = auto_diagrams_instrument {
         // Skip chords rendered inline via {define} while show_diagrams was true.
@@ -1429,6 +1440,15 @@ fn render_lyrics(
     let chord_font = doc.style.chord.font;
     let lyrics_gap = doc.style.lyrics_gap;
     let chord_gap = doc.style.chord_gap;
+
+    if !verbatim {
+        // A line wider than its column is cut off by the page; count it so
+        // the song can report it (and a caller can choose a smaller size).
+        let lyric_w = font_text_width(&lyrics.text(), body_font, lyrics_size);
+        if lyric_w > doc.column_width() + 0.5 {
+            doc.overflowed_lines += 1;
+        }
+    }
 
     if !lyrics.has_chords() {
         doc.ensure_space(lyrics_size + lyrics_gap);
@@ -1597,7 +1617,11 @@ fn render_section_label(directive: &chordsketch_chordpro::ast::Directive, doc: &
 /// underline from the document style), then move below it.
 fn draw_label(text: &str, doc: &mut PdfDocument) {
     let FontSpec { font, size } = doc.style.label;
-    doc.ensure_space(size + LINE_GAP);
+    // Keep the name with its section: room for the name and the first chord
+    // and lyric rows, or it moves to the next column or page with them.
+    let style = &doc.style;
+    let first_lines = style.chord.size + style.chord_gap + style.text.size + style.lyrics_gap;
+    doc.ensure_space(size + LINE_GAP + first_lines);
     doc.text(text, font, size);
     if doc.style.label_underline {
         // Helvetica's underline: 100/1000 em below the baseline, 50/1000 thick.
@@ -3098,6 +3122,9 @@ struct PdfDocument {
     style: PdfStyle,
     /// Gap between columns in points, from `pdf.columns.gap`.
     column_gap: f32,
+    /// Lines drawn wider than their column (or the page's text width),
+    /// which the page cuts off; reported as one warning per song.
+    overflowed_lines: usize,
     /// Where columns start on the current page: the position of the
     /// `{columns}` directive, so a heading above it is not overlapped; the
     /// page's top margin on a new page.
@@ -3148,6 +3175,7 @@ impl PdfDocument {
             pages: vec![Vec::new()],
             style: PdfStyle::default(),
             column_gap: COLUMN_GAP,
+            overflowed_lines: 0,
             column_top: PAGE_H - top,
             page_w: PAGE_W,
             page_h: PAGE_H,
