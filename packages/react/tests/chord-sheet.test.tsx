@@ -9,6 +9,7 @@ import type { ChordproWasmLoader } from '../src/use-chordpro-ast';
 import { resetSharedAudioContextForTests } from '../src/audio-context';
 import type { ChordAudioWasmLoader } from '../src/use-chord-audio';
 import { FakeAudioContext } from './fake-audio-context';
+import { SLUG } from '../src/brand.generated';
 
 // Stub renderer surface — covers BOTH the AST → JSX path
 // (parseChordproWithWarnings* used by `format="html"`
@@ -191,7 +192,7 @@ describe('<ChordSheet>', () => {
     );
 
     await waitFor(() => {
-      const lyrics = container.querySelector('.chordsketch-sheet__content .song .lyrics');
+      const lyrics = container.querySelector(`.${SLUG}-sheet__content .song .lyrics`);
       expect(lyrics?.textContent).toBe('{title: Hi}');
     });
     expect(stub.parseChordproWithWarnings).toHaveBeenCalledWith('{title: Hi}');
@@ -237,7 +238,7 @@ describe('<ChordSheet>', () => {
       <ChordSheet source="one" astWasmLoader={makeAstLoader(stub)} />,
     );
     await waitFor(() => {
-      const lyrics = container.querySelector('.chordsketch-sheet__content .song .lyrics');
+      const lyrics = container.querySelector(`.${SLUG}-sheet__content .song .lyrics`);
       expect(lyrics?.textContent).toBe('one');
     });
 
@@ -248,7 +249,7 @@ describe('<ChordSheet>', () => {
 
     await waitFor(() => expect(screen.getByRole('alert').textContent).toBe('bad'));
     // Stale tree from "one" is still rendered alongside the error.
-    const lyrics = container.querySelector('.chordsketch-sheet__content .song .lyrics');
+    const lyrics = container.querySelector(`.${SLUG}-sheet__content .song .lyrics`);
     expect(lyrics?.textContent).toBe('one');
   });
 
@@ -269,7 +270,7 @@ describe('<ChordSheet>', () => {
       <ChordSheet source="x" astWasmLoader={makeAstLoader(stub)} />,
     );
     // Before the effect resolves, aria-busy should be true.
-    const sheet = container.querySelector('.chordsketch-sheet');
+    const sheet = container.querySelector(`.${SLUG}-sheet`);
     expect(sheet?.getAttribute('aria-busy')).toBe('true');
   });
 
@@ -406,7 +407,7 @@ describe('<ChordSheet>', () => {
       expect(node.textContent).toBe('Problem: html-boom');
     });
     // No content wrapper because `ast` stayed null on every parse.
-    expect(container.querySelector('.chordsketch-sheet__content')).toBeNull();
+    expect(container.querySelector(`.${SLUG}-sheet__content`)).toBeNull();
   });
 
   test('HTML branch with errorFallback=null hides the alert before any successful render', async () => {
@@ -431,7 +432,7 @@ describe('<ChordSheet>', () => {
     await waitFor(() => expect(stub.parseChordproWithWarnings).toHaveBeenCalled());
     expect(container.querySelector('[role="alert"]')).toBeNull();
     // No prior successful render means no content wrapper either.
-    expect(container.querySelector('.chordsketch-sheet__content')).toBeNull();
+    expect(container.querySelector(`.${SLUG}-sheet__content`)).toBeNull();
   });
 
   test('WASM module is loaded once across rerenders with different sources', async () => {
@@ -533,7 +534,7 @@ describe('<ChordSheet>', () => {
     const fig = container.querySelector('.chord-diagrams-grid .chord-diagram-container');
     expect(fig).not.toBeNull();
     const diagramWrappers = container.querySelectorAll(
-      '.chord-diagrams-grid .chordsketch-diagram',
+      `.chord-diagrams-grid .${SLUG}-diagram`,
     );
     expect(diagramWrappers.length).toBeGreaterThan(0);
     diagramWrappers.forEach((wrapper) => {
@@ -569,12 +570,12 @@ describe('<ChordSheet>', () => {
       expect(container.querySelector(".chord[role='button']")).not.toBeNull();
     });
     expect(container.querySelector('.chord--selected')).toBeNull();
-    expect(container.querySelector('.chordsketch-sheet__cins')).toBeNull();
+    expect(container.querySelector(`.${SLUG}-sheet__cins`)).toBeNull();
     const chord = container.querySelector(".chord[role='button']") as HTMLElement;
     fireEvent.click(chord);
     // Selected badge, but no inspector (no onChordEdit wired).
     expect(container.querySelector('.chord--selected')).not.toBeNull();
-    expect(container.querySelector('.chordsketch-sheet__cins')).toBeNull();
+    expect(container.querySelector(`.${SLUG}-sheet__cins`)).toBeNull();
     // Keyboard ArrowRight moves Am one char into "hi".
     fireEvent.keyDown(
       container.querySelector('.chord--selected') as HTMLElement,
@@ -606,8 +607,8 @@ describe('<ChordSheet>', () => {
     });
     fireEvent.click(container.querySelector(".chord[role='button']") as HTMLElement);
     // Inspector appears with the selected chord in the header.
-    expect(container.querySelector('.chordsketch-sheet__cins')).not.toBeNull();
-    expect(container.querySelector('.chordsketch-sheet__cins-name')?.textContent).toBe('Am');
+    expect(container.querySelector(`.${SLUG}-sheet__cins`)).not.toBeNull();
+    expect(container.querySelector(`.${SLUG}-sheet__cins-name`)?.textContent).toBe('Am');
     // A 7th chip emits a ChordEditEvent rewriting the chord at its source
     // position. Am is detail-less in the stub, so the editor falls back to
     // raw-name parts (triad min, no 7th); clicking the "7" seventh chip adds
@@ -643,7 +644,7 @@ describe('<ChordSheet>', () => {
     });
     fireEvent.click(container.querySelector(".chord[role='button']") as HTMLElement);
     const right = container.querySelector(
-      '.chordsketch-sheet__cins-move button[aria-label="Move chord right"]',
+      `.${SLUG}-sheet__cins-move button[aria-label="Move chord right"]`,
     ) as HTMLButtonElement;
     fireEvent.click(right);
     expect(onChordReposition).toHaveBeenCalledTimes(1);
@@ -693,7 +694,7 @@ describe('<ChordSheet>', () => {
       // selection coordinates (line, offset, ordinal) are unchanged, so
       // the scroll effect (keyed on chordSelection) must NOT re-fire.
       const input = container.querySelector(
-        '.chordsketch-sheet__cins-row2 .chordsketch-sheet__cins-input',
+        `.${SLUG}-sheet__cins-row2 .${SLUG}-sheet__cins-input`,
       ) as HTMLInputElement;
       fireEvent.change(input, { target: { value: 'm7' } });
       await Promise.resolve();
@@ -718,10 +719,10 @@ describe('<ChordSheet>', () => {
     });
     fireEvent.click(container.querySelector(".chord[role='button']") as HTMLElement);
     const left = container.querySelector(
-      '.chordsketch-sheet__cins-move button[aria-label="Move chord left"]',
+      `.${SLUG}-sheet__cins-move button[aria-label="Move chord left"]`,
     ) as HTMLButtonElement;
     const right = container.querySelector(
-      '.chordsketch-sheet__cins-move button[aria-label="Move chord right"]',
+      `.${SLUG}-sheet__cins-move button[aria-label="Move chord right"]`,
     ) as HTMLButtonElement;
     expect(left.disabled).toBe(true);
     expect(right.disabled).toBe(false);
@@ -806,7 +807,7 @@ describe('<ChordSheet>', () => {
     });
     fireEvent.click(container.querySelector(".chord[role='button']") as HTMLElement);
     const remove = container.querySelector(
-      '.chordsketch-sheet__cins-remove',
+      `.${SLUG}-sheet__cins-remove`,
     ) as HTMLButtonElement;
     fireEvent.click(remove);
     expect(onChordDelete).toHaveBeenCalledWith({
@@ -815,7 +816,7 @@ describe('<ChordSheet>', () => {
       fromLength: 4,
       expected: 'Am',
     });
-    expect(container.querySelector('.chordsketch-sheet__cins')).toBeNull();
+    expect(container.querySelector(`.${SLUG}-sheet__cins`)).toBeNull();
   });
 
   test('the inspector "Remove" button is hidden when onChordDelete is not wired', async () => {
@@ -831,8 +832,8 @@ describe('<ChordSheet>', () => {
       expect(container.querySelector(".chord[role='button']")).not.toBeNull();
     });
     fireEvent.click(container.querySelector(".chord[role='button']") as HTMLElement);
-    expect(container.querySelector('.chordsketch-sheet__cins')).not.toBeNull();
-    expect(container.querySelector('.chordsketch-sheet__cins-remove')).toBeNull();
+    expect(container.querySelector(`.${SLUG}-sheet__cins`)).not.toBeNull();
+    expect(container.querySelector(`.${SLUG}-sheet__cins-remove`)).toBeNull();
   });
 
   test('pressing down outside the sheet clears the chord selection', async () => {
@@ -848,10 +849,10 @@ describe('<ChordSheet>', () => {
       expect(container.querySelector(".chord[role='button']")).not.toBeNull();
     });
     fireEvent.click(container.querySelector(".chord[role='button']") as HTMLElement);
-    expect(container.querySelector('.chordsketch-sheet__cins')).not.toBeNull();
+    expect(container.querySelector(`.${SLUG}-sheet__cins`)).not.toBeNull();
     // Pointer down on the document body (outside any chord) clears it.
     fireEvent.pointerDown(document.body);
-    expect(container.querySelector('.chordsketch-sheet__cins')).toBeNull();
+    expect(container.querySelector(`.${SLUG}-sheet__cins`)).toBeNull();
   });
 
   test('pressing inside the inspector keeps the selection', async () => {
@@ -869,10 +870,10 @@ describe('<ChordSheet>', () => {
       expect(container.querySelector(".chord[role='button']")).not.toBeNull();
     });
     fireEvent.click(container.querySelector(".chord[role='button']") as HTMLElement);
-    const inspector = container.querySelector('.chordsketch-sheet__cins') as HTMLElement;
+    const inspector = container.querySelector(`.${SLUG}-sheet__cins`) as HTMLElement;
     expect(inspector).not.toBeNull();
     fireEvent.pointerDown(inspector);
-    expect(container.querySelector('.chordsketch-sheet__cins')).not.toBeNull();
+    expect(container.querySelector(`.${SLUG}-sheet__cins`)).not.toBeNull();
   });
 
   test('pressing on the chord glyph (text node) does not clear the selection', async () => {
@@ -979,10 +980,10 @@ describe('<ChordSheet>', () => {
       expect(container.querySelector(".chord[role='button']")).not.toBeNull();
     });
     fireEvent.click(container.querySelector(".chord[role='button']") as HTMLElement);
-    expect(container.querySelector('.chordsketch-sheet__cins')).not.toBeNull();
+    expect(container.querySelector(`.${SLUG}-sheet__cins`)).not.toBeNull();
     // Press the inline chip — the selection / inspector must survive.
     fireEvent.pointerDown(container.querySelector('.meta-inline--time') as HTMLElement);
-    expect(container.querySelector('.chordsketch-sheet__cins')).not.toBeNull();
+    expect(container.querySelector(`.${SLUG}-sheet__cins`)).not.toBeNull();
   });
 
   test('controlled mode: no clear is reported when nothing is selected', async () => {
@@ -1024,7 +1025,7 @@ describe('<ChordSheet>', () => {
     // Chords are not selectable; no badge / inspector / role=button.
     expect(container.querySelector(".chord[role='button']")).toBeNull();
     fireEvent.click(container.querySelector('.chord') as HTMLElement);
-    expect(container.querySelector('.chordsketch-sheet__cins')).toBeNull();
+    expect(container.querySelector(`.${SLUG}-sheet__cins`)).toBeNull();
     expect(container.querySelector('.chord--selected')).toBeNull();
   });
 
@@ -1105,7 +1106,7 @@ describe('<ChordSheet>', () => {
     });
     fireEvent.click(container.querySelector(".chord[role='button']") as HTMLElement);
     // Header title matches the rendered chord (♭), not the raw ASCII `b`.
-    expect(container.querySelector('.chordsketch-sheet__cins-name')?.textContent).toBe('B♭');
+    expect(container.querySelector(`.${SLUG}-sheet__cins-name`)?.textContent).toBe('B♭');
   });
 
   test('inspector is a footer SIBLING of the song content, not inside it (#2638)', async () => {
@@ -1121,9 +1122,9 @@ describe('<ChordSheet>', () => {
       expect(container.querySelector(".chord[role='button']")).not.toBeNull();
     });
     fireEvent.click(container.querySelector(".chord[role='button']") as HTMLElement);
-    const wrapper = container.querySelector('.chordsketch-sheet');
-    const content = container.querySelector('.chordsketch-sheet__content');
-    const inspector = container.querySelector('.chordsketch-sheet__cins');
+    const wrapper = container.querySelector(`.${SLUG}-sheet`);
+    const content = container.querySelector(`.${SLUG}-sheet__content`);
+    const inspector = container.querySelector(`.${SLUG}-sheet__cins`);
     expect(inspector).not.toBeNull();
     // Footer panel: within the sheet wrapper, but NOT inside the
     // scrolling song content (so it sits below the song, not over it).
@@ -1232,7 +1233,7 @@ describe('<ChordSheet>', () => {
       // stays usable while audio is on.
       fireEvent.click(chord);
       expect(container.querySelector('.chord--selected')).not.toBeNull();
-      expect(container.querySelector('.chordsketch-sheet__cins')).not.toBeNull();
+      expect(container.querySelector(`.${SLUG}-sheet__cins`)).not.toBeNull();
     } finally {
       if (original === undefined) {
         delete (window as unknown as { AudioContext?: unknown }).AudioContext;

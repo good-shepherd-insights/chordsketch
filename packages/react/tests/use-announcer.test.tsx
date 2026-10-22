@@ -3,6 +3,7 @@ import { act, render, screen } from '@testing-library/react';
 import { describe, expect, test } from 'vitest';
 
 import { useAnnouncer } from '../src/use-announcer';
+import { SLUG } from '../src/brand.generated';
 
 /**
  * Harness that announces every value in `messages` in order and
@@ -36,8 +37,8 @@ describe('useAnnouncer', () => {
   test('uses the shared sr-only utility class so the region stays in the a11y tree', () => {
     render(<Harness messages={[]} />);
     const live = screen.getByRole('status');
-    expect(live.classList.contains('chordsketch-ireal-bar-grid__sr-only')).toBe(true);
-    expect(live.classList.contains('chordsketch-ireal-bar-grid__live')).toBe(true);
+    expect(live.classList.contains(`${SLUG}-ireal-bar-grid__sr-only`)).toBe(true);
+    expect(live.classList.contains(`${SLUG}-ireal-bar-grid__live`)).toBe(true);
   });
 
   test('announce sets the live region textContent after a microtask', async () => {

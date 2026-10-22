@@ -13,6 +13,7 @@ import {
 // default `children` value below can reference it.
 export { PDF_EXPORT_DEFAULT_LABEL } from './pdf-export-label';
 import { PDF_EXPORT_DEFAULT_LABEL } from './pdf-export-label';
+import { BRAND, SLUG } from './brand.generated';
 
 /** Props accepted by the {@link PdfExport} button. */
 export interface PdfExportProps
@@ -21,7 +22,7 @@ export interface PdfExportProps
   source: string;
   /**
    * Filename suggested to the browser when the download anchor is
-   * clicked. Defaults to `chordsketch-output.pdf` to match the
+   * clicked. Defaults to the brand's `pdfFilename` (`brand/brand.json`) to match the
    * playground (`packages/ui-web/src/index.ts`) default.
    */
   filename?: string;
@@ -79,7 +80,7 @@ export interface PdfExportProps
 
 function defaultPdfErrorFallback(error: Error): ReactNode {
   return (
-    <div role="alert" className="chordsketch-pdf-export__error">
+    <div role="alert" className={`${SLUG}-pdf-export__error`}>
       {error.message}
     </div>
   );
@@ -104,7 +105,7 @@ function defaultPdfErrorFallback(error: Error): ReactNode {
  */
 export function PdfExport({
   source,
-  filename = 'chordsketch-output.pdf',
+  filename = BRAND.pdfFilename,
   options,
   children = PDF_EXPORT_DEFAULT_LABEL,
   onExported,

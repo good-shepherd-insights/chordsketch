@@ -3,6 +3,7 @@ import { describe, expect, test, vi } from 'vitest';
 
 import { PreviewToolbar } from '../src/index';
 import { PDF_EXPORT_DEFAULT_LABEL, PdfExport, type WasmLoader } from '../src/pdf';
+import { SLUG } from '../src/brand.generated';
 
 const PDF_BYTES = new Uint8Array([0x25, 0x50, 0x44, 0x46]); // "%PDF"
 
@@ -358,7 +359,7 @@ describe('<PreviewToolbar>', () => {
     const group = screen.getByRole('group', { name: 'Chord diagrams' });
     expect(group).toBeTruthy();
     const orientSelect = group.querySelector<HTMLSelectElement>(
-      '.chordsketch-preview-toolbar__diagrams-orientation',
+      `.${SLUG}-preview-toolbar__diagrams-orientation`,
     );
     expect(orientSelect).not.toBeNull();
     expect(orientSelect!.value).toBe('vertical');
@@ -386,7 +387,7 @@ describe('<PreviewToolbar>', () => {
       />,
     );
     expect(
-      container.querySelector('.chordsketch-preview-toolbar__diagrams-string-order'),
+      container.querySelector(`.${SLUG}-preview-toolbar__diagrams-string-order`),
     ).toBeNull();
   });
 

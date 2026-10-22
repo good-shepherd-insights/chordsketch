@@ -7,6 +7,7 @@ import {
   __resetStalePitchesWarnings,
   type ChordDiagramWasmLoader,
 } from '../src/use-chord-diagram';
+import { SLUG } from '../src/brand.generated';
 
 interface StubRenderer {
   default: ReturnType<typeof vi.fn>;
@@ -58,7 +59,7 @@ describe('<ChordDiagram>', () => {
       <ChordDiagram chord="Am" instrument="guitar" wasmLoader={makeLoader(stub)} />,
     );
     await waitFor(() => {
-      const svg = container.querySelector('.chordsketch-diagram svg');
+      const svg = container.querySelector(`.${SLUG}-diagram svg`);
       expect(svg?.getAttribute('data-chord')).toBe('Am');
       expect(svg?.getAttribute('data-instrument')).toBe('guitar');
     });
@@ -143,7 +144,7 @@ describe('<ChordDiagram>', () => {
       <ChordDiagram chord="C" instrument="piano" wasmLoader={makeLoader(stub)} />,
     );
     await waitFor(() => {
-      const svg = container.querySelector('.chordsketch-diagram svg');
+      const svg = container.querySelector(`.${SLUG}-diagram svg`);
       expect(svg?.getAttribute('data-instrument')).toBe('piano');
     });
   });
@@ -173,7 +174,7 @@ describe('<ChordDiagram>', () => {
     );
     let wrapper!: HTMLElement;
     await waitFor(() => {
-      wrapper = container.querySelector('.chordsketch-diagram--audio') as HTMLElement;
+      wrapper = container.querySelector(`.${SLUG}-diagram--audio`) as HTMLElement;
       expect(wrapper).not.toBeNull();
       // The SVG actually resolved, so this is the svg branch.
       expect(wrapper.querySelector('svg')).not.toBeNull();
@@ -208,7 +209,7 @@ describe('<ChordDiagram>', () => {
     );
     let wrapper!: HTMLElement;
     await waitFor(() => {
-      wrapper = container.querySelector('.chordsketch-diagram--audio') as HTMLElement;
+      wrapper = container.querySelector(`.${SLUG}-diagram--audio`) as HTMLElement;
       expect(wrapper).not.toBeNull();
       expect(wrapper.querySelector('svg')).not.toBeNull();
     });
@@ -240,7 +241,7 @@ describe('<ChordDiagram>', () => {
     );
     let wrapper!: HTMLElement;
     await waitFor(() => {
-      wrapper = container.querySelector('.chordsketch-diagram--audio') as HTMLElement;
+      wrapper = container.querySelector(`.${SLUG}-diagram--audio`) as HTMLElement;
       expect(wrapper).not.toBeNull();
       expect(wrapper.querySelector('svg')).not.toBeNull();
     });
@@ -264,7 +265,7 @@ describe('<ChordDiagram>', () => {
     );
     let wrapper!: HTMLElement;
     await waitFor(() => {
-      wrapper = container.querySelector('.chordsketch-diagram--audio') as HTMLElement;
+      wrapper = container.querySelector(`.${SLUG}-diagram--audio`) as HTMLElement;
       expect(wrapper).not.toBeNull();
       expect(wrapper.querySelector('svg')).not.toBeNull();
     });
@@ -285,10 +286,10 @@ describe('<ChordDiagram>', () => {
       />,
     );
     await waitFor(() => {
-      expect(off.container.querySelector('.chordsketch-diagram svg')).not.toBeNull();
+      expect(off.container.querySelector(`.${SLUG}-diagram svg`)).not.toBeNull();
     });
-    const offWrapper = off.container.querySelector('.chordsketch-diagram') as HTMLElement;
-    expect(offWrapper.classList.contains('chordsketch-diagram--audio')).toBe(false);
+    const offWrapper = off.container.querySelector(`.${SLUG}-diagram`) as HTMLElement;
+    expect(offWrapper.classList.contains(`${SLUG}-diagram--audio`)).toBe(false);
     expect(offWrapper.getAttribute('role')).toBe('img');
     fireEvent.click(offWrapper);
     expect(play).not.toHaveBeenCalled();
@@ -297,10 +298,10 @@ describe('<ChordDiagram>', () => {
       <ChordDiagram chord="Am" instrument="guitar" wasmLoader={makeLoader(stub)} />,
     );
     await waitFor(() => {
-      expect(absent.container.querySelector('.chordsketch-diagram svg')).not.toBeNull();
+      expect(absent.container.querySelector(`.${SLUG}-diagram svg`)).not.toBeNull();
     });
     expect(
-      absent.container.querySelector('.chordsketch-diagram')?.getAttribute('role'),
+      absent.container.querySelector(`.${SLUG}-diagram`)?.getAttribute('role'),
     ).toBe('img');
   });
 
@@ -318,7 +319,7 @@ describe('<ChordDiagram>', () => {
     let wrapper!: HTMLElement;
     await waitFor(() => {
       // Not-found branch: no svg, but still an audio button.
-      wrapper = container.querySelector('.chordsketch-diagram--audio') as HTMLElement;
+      wrapper = container.querySelector(`.${SLUG}-diagram--audio`) as HTMLElement;
       expect(wrapper).not.toBeNull();
       expect(wrapper.querySelector('svg')).toBeNull();
     });
@@ -358,12 +359,12 @@ describe('<ChordDiagram>', () => {
       );
       let wrapper!: HTMLElement;
       await waitFor(() => {
-        wrapper = container.querySelector('.chordsketch-diagram--audio') as HTMLElement;
+        wrapper = container.querySelector(`.${SLUG}-diagram--audio`) as HTMLElement;
         expect(wrapper).not.toBeNull();
       });
       fireEvent.click(wrapper);
       expect(play).toHaveBeenCalledWith('Am');
-      expect(wrapper.classList.contains('chordsketch-diagram--ringing')).toBe(false);
+      expect(wrapper.classList.contains(`${SLUG}-diagram--ringing`)).toBe(false);
     } finally {
       Object.defineProperty(window, 'matchMedia', {
         writable: true,
@@ -382,7 +383,7 @@ describe('<ChordDiagram>', () => {
     const { container } = render(
       <ChordDiagram chord="Am" instrument="guitar" chordAudio={{ enabled: true, play }} wasmLoader={loader} />,
     );
-    const wrapper = container.querySelector('.chordsketch-diagram--audio') as HTMLElement;
+    const wrapper = container.querySelector(`.${SLUG}-diagram--audio`) as HTMLElement;
     expect(wrapper).not.toBeNull();
     expect(wrapper.getAttribute('aria-busy')).toBe('true');
     expect(wrapper.getAttribute('role')).toBe('button');
@@ -407,9 +408,9 @@ describe('<ChordDiagram>', () => {
     await waitFor(() => {
       expect(screen.getByRole('alert').textContent).toBe('boom');
     });
-    const wrapper = container.querySelector('.chordsketch-diagram') as HTMLElement;
+    const wrapper = container.querySelector(`.${SLUG}-diagram`) as HTMLElement;
     // The failed diagram must not paint a clickable affordance it cannot honour.
-    expect(wrapper.classList.contains('chordsketch-diagram--audio')).toBe(false);
+    expect(wrapper.classList.contains(`${SLUG}-diagram--audio`)).toBe(false);
     expect(wrapper.getAttribute('role')).toBeNull();
     fireEvent.click(wrapper);
     expect(play).not.toHaveBeenCalled();
@@ -425,9 +426,9 @@ describe('<ChordDiagram>', () => {
       <ChordDiagram chord="Am" instrument="guitar" role="tooltip" wasmLoader={makeLoader(stub)} />,
     );
     await waitFor(() => {
-      expect(container.querySelector('.chordsketch-diagram svg')).not.toBeNull();
+      expect(container.querySelector(`.${SLUG}-diagram svg`)).not.toBeNull();
     });
-    const wrapper = container.querySelector('.chordsketch-diagram') as HTMLElement;
+    const wrapper = container.querySelector(`.${SLUG}-diagram`) as HTMLElement;
     expect(wrapper.getAttribute('role')).toBe('tooltip');
     expect(wrapper.getAttribute('aria-label')).toBe('Am chord diagram (guitar)');
   });
@@ -488,7 +489,7 @@ describe('<ChordDiagram> orientation pass-through (#2572)', () => {
       />,
     );
     await waitFor(() => {
-      const svg = container.querySelector('.chordsketch-diagram svg');
+      const svg = container.querySelector(`.${SLUG}-diagram svg`);
       expect(svg?.getAttribute('data-mode')).toBe('oriented');
       expect(svg?.getAttribute('data-orientation')).toBe('horizontal');
     });

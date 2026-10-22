@@ -3,6 +3,7 @@ import { describe, expect, test, vi } from 'vitest';
 
 import { IrealProEditor, type CombinedIrealLoader } from '../src/ireal-pro-editor';
 import type { IrealSong } from '../src/ireal-ast';
+import { SLUG } from '../src/brand.generated';
 
 interface EditorStub {
   default: ReturnType<typeof vi.fn>;
@@ -54,8 +55,8 @@ describe('<IrealProEditor>', () => {
       <IrealProEditor defaultValue="irealb://demo" loader={makeLoader(stub)} />,
     );
     await waitFor(() => expect(stub.parseIrealb).toHaveBeenCalled());
-    expect(container.querySelector('.chordsketch-ireal-pro-editor__editor')).toBeTruthy();
-    expect(container.querySelector('.chordsketch-ireal-pro-editor__preview')).toBeTruthy();
+    expect(container.querySelector(`.${SLUG}-ireal-pro-editor__editor`)).toBeTruthy();
+    expect(container.querySelector(`.${SLUG}-ireal-pro-editor__preview`)).toBeTruthy();
     await waitFor(() => expect(screen.getByTestId('ireal-svg')).toBeTruthy());
   });
 
@@ -65,7 +66,7 @@ describe('<IrealProEditor>', () => {
       <IrealProEditor defaultValue="irealb://demo" loader={makeLoader(stub)} hidePreview />,
     );
     await waitFor(() => expect(stub.parseIrealb).toHaveBeenCalled());
-    expect(container.querySelector('.chordsketch-ireal-pro-editor__preview')).toBeNull();
+    expect(container.querySelector(`.${SLUG}-ireal-pro-editor__preview`)).toBeNull();
     // Preview's wasm calls should not happen either.
     expect(stub.renderIrealSvg).not.toHaveBeenCalled();
   });

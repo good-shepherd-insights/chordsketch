@@ -11,6 +11,7 @@ import type { ChordSelection } from '../src/chordpro-jsx';
 import type { ChordproSong } from '../src/chordpro-ast';
 import { repositionedChordOrdinal } from '../src/chord-source-edit';
 import type { ChordRepositionEvent } from '../src/chord-source-edit';
+import { SLUG } from '../src/brand.generated';
 
 // Empty metadata helper — every metadata field has to be present
 // to satisfy the strict ChordproMetadata shape, even on tests that
@@ -944,7 +945,7 @@ describe('renderChordproAst', () => {
     // setters (which we don't observe).
     const dtStore = new Map<string, string>();
     dtStore.set(
-      'application/x-chordsketch-chord',
+      `application/x-${SLUG}-chord`,
       JSON.stringify({ fromLine: 1, fromColumn: 0, fromLength: 4, chord: 'Am' }),
     );
     const dt = {
@@ -1026,7 +1027,7 @@ describe('renderChordproAst', () => {
     // setters (which we don't observe).
     const dtStore = new Map<string, string>();
     dtStore.set(
-      'application/x-chordsketch-chord',
+      `application/x-${SLUG}-chord`,
       JSON.stringify({ fromLine: 1, fromColumn: 0, fromLength: 4, chord: 'Am' }),
     );
     const dt = {
@@ -1083,7 +1084,7 @@ describe('renderChordproAst', () => {
     const targetLyrics = blocks[1].querySelector('.lyrics') as HTMLElement;
     const dtStore = new Map<string, string>();
     dtStore.set(
-      'application/x-chordsketch-chord',
+      `application/x-${SLUG}-chord`,
       JSON.stringify({ fromLine: 1, fromColumn: 0, fromLength: 4, chord: 'Am' }),
     );
     const dt = {
@@ -4320,7 +4321,7 @@ describe('renderChordproAst inline / hover diagrams (ADR-0027)', () => {
       }),
     );
     const diagram = container.querySelector(
-      '.chord-diagrams .chordsketch-diagram--audio',
+      `.chord-diagrams .${SLUG}-diagram--audio`,
     ) as HTMLElement;
     expect(diagram).not.toBeNull();
     expect(diagram.getAttribute('role')).toBe('button');
@@ -4337,7 +4338,7 @@ describe('renderChordproAst inline / hover diagrams (ADR-0027)', () => {
       }),
     );
     const diagram = container.querySelector(
-      '.chord-diagrams .chordsketch-diagram--audio',
+      `.chord-diagrams .${SLUG}-diagram--audio`,
     ) as HTMLElement;
     expect(diagram).not.toBeNull();
     fireEvent.click(diagram);
@@ -4353,8 +4354,8 @@ describe('renderChordproAst inline / hover diagrams (ADR-0027)', () => {
         chordAudio: { enabled: false, play },
       }),
     );
-    expect(container.querySelector('.chord-diagrams .chordsketch-diagram--audio')).toBeNull();
-    const diagram = container.querySelector('.chord-diagrams .chordsketch-diagram') as HTMLElement;
+    expect(container.querySelector(`.chord-diagrams .${SLUG}-diagram--audio`)).toBeNull();
+    const diagram = container.querySelector(`.chord-diagrams .${SLUG}-diagram`) as HTMLElement;
     fireEvent.click(diagram);
     expect(play).not.toHaveBeenCalled();
   });
@@ -4368,7 +4369,7 @@ describe('renderChordproAst inline / hover diagrams (ADR-0027)', () => {
       }),
     );
     const diagram = container.querySelector(
-      '.chord-block-inline-diagram .chordsketch-diagram--audio',
+      `.chord-block-inline-diagram .${SLUG}-diagram--audio`,
     ) as HTMLElement;
     expect(diagram).not.toBeNull();
     expect(diagram.getAttribute('role')).toBe('button');
@@ -4385,7 +4386,7 @@ describe('renderChordproAst inline / hover diagrams (ADR-0027)', () => {
       }),
     );
     const diagram = container.querySelector(
-      '.chord-block-inline-diagram .chordsketch-diagram--audio',
+      `.chord-block-inline-diagram .${SLUG}-diagram--audio`,
     ) as HTMLElement;
     expect(diagram).not.toBeNull();
     fireEvent.click(diagram);

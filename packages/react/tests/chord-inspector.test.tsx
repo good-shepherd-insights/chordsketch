@@ -5,6 +5,7 @@ import { ChordInspector } from '../src/chord-inspector';
 import type { ChordParts } from '../src/chord-source-edit';
 import type { ChordStaffWasmLoader, StaffNote } from '../src/use-chord-staff';
 import { readStylesheetSource } from './stylesheet-source';
+import { SLUG } from '../src/brand.generated';
 
 const AM7_STAFF: StaffNote[] = [
   { letter: 'A', accidental: 0, octave: 3, midi: 57 },
@@ -50,10 +51,10 @@ function setup(overrides: Partial<Parameters<typeof ChordInspector>[0]> = {}) {
 describe('<ChordInspector>', () => {
   test('header shows the chord name; root + triad + 7th controls reflect the parts', () => {
     const { container } = setup();
-    expect(container.querySelector('.chordsketch-sheet__cins-name')?.textContent).toBe('Am7');
+    expect(container.querySelector(`.${SLUG}-sheet__cins-name`)?.textContent).toBe('Am7');
     // Root A is pressed; accidental natural is pressed.
     const pressedRoot = container.querySelector(
-      '.chordsketch-sheet__cins-seg button[aria-pressed="true"]',
+      `.${SLUG}-sheet__cins-seg button[aria-pressed="true"]`,
     );
     expect(pressedRoot?.textContent).toBe('A');
     // Am7 decomposes to triad=min, 7th=7, no tensions: the matching chips in
@@ -73,10 +74,10 @@ describe('<ChordInspector>', () => {
   test('renders the constituent-notes staff beneath the chord name', async () => {
     const { container } = setup();
     await waitFor(() => {
-      const svg = container.querySelector('.chordsketch-sheet__cins-staff .chordsketch-staff__svg');
+      const svg = container.querySelector(`.${SLUG}-sheet__cins-staff .${SLUG}-staff__svg`);
       expect(svg).not.toBeNull();
       // One notehead per tone of Am7.
-      expect(svg!.querySelectorAll('.chordsketch-staff__notehead')).toHaveLength(
+      expect(svg!.querySelectorAll(`.${SLUG}-staff__notehead`)).toHaveLength(
         AM7_STAFF.length,
       );
     });
@@ -85,12 +86,12 @@ describe('<ChordInspector>', () => {
 
   test('omits the staff in the idle state', () => {
     const { container } = setup({ selected: false });
-    expect(container.querySelector('.chordsketch-staff')).toBeNull();
+    expect(container.querySelector(`.${SLUG}-staff`)).toBeNull();
   });
 
   test('changing the root emits the full parts with the new root', () => {
     const { container, onChange } = setup();
-    const segs = container.querySelectorAll('.chordsketch-sheet__cins-seg');
+    const segs = container.querySelectorAll(`.${SLUG}-sheet__cins-seg`);
     const dButton = Array.from(segs[0].querySelectorAll('button')).find(
       (b) => b.textContent === 'D',
     ) as HTMLButtonElement;
@@ -100,7 +101,7 @@ describe('<ChordInspector>', () => {
 
   test('choosing an accidental emits the mapped character', () => {
     const { container, onChange } = setup();
-    const accSeg = container.querySelectorAll('.chordsketch-sheet__cins-seg')[1];
+    const accSeg = container.querySelectorAll(`.${SLUG}-sheet__cins-seg`)[1];
     const flat = Array.from(accSeg.querySelectorAll('button')).find(
       (b) => b.getAttribute('aria-label') === 'Flat',
     ) as HTMLButtonElement;
@@ -192,18 +193,18 @@ describe('<ChordInspector>', () => {
     // additionally proven by the playground e2e.
     const css = readStylesheetSource();
     // A dedicated :disabled rule exists for the chip, signalling not-allowed.
-    const disabledRule = css.match(/\.chordsketch-sheet__cins-chip:disabled\s*\{([^}]*)\}/);
+    const disabledRule = css.match(new RegExp(`\\.${SLUG}-sheet__cins-chip:disabled\\s*\\{([^}]*)\\}`));
     expect(disabledRule).not.toBeNull();
     expect(disabledRule![1]).toContain('cursor: not-allowed');
     // The chip hover is gated behind :not(:disabled) so disabled chips do not
     // highlight.
-    expect(css).toContain('.chordsketch-sheet__cins-chip:hover:not(:disabled)');
-    expect(css).not.toMatch(/\.chordsketch-sheet__cins-chip:hover\s*\{/);
+    expect(css).toContain(`.${SLUG}-sheet__cins-chip:hover:not(:disabled)`);
+    expect(css).not.toMatch(new RegExp(`\\.${SLUG}-sheet__cins-chip:hover\\s*\\{`));
   });
 
   test('typing in the suffix / bass inputs emits the edited value', () => {
     const { container, onChange } = setup();
-    const inputs = container.querySelectorAll('.chordsketch-sheet__cins-input');
+    const inputs = container.querySelectorAll(`.${SLUG}-sheet__cins-input`);
     fireEvent.change(inputs[0], { target: { value: 'sus4' } });
     expect(onChange).toHaveBeenLastCalledWith({
       root: 'A',
@@ -331,7 +332,7 @@ describe('<ChordInspector>', () => {
       expect((btn as HTMLButtonElement).disabled).toBe(true);
     }
     // The free-form bass input still shows the literal token.
-    const bassInput = container.querySelectorAll('.chordsketch-sheet__cins-input')[1];
+    const bassInput = container.querySelectorAll(`.${SLUG}-sheet__cins-input`)[1];
     expect((bassInput as HTMLInputElement).value).toBe('G7');
   });
 
@@ -354,13 +355,13 @@ describe('<ChordInspector>', () => {
     // step granularity, not the object, so the two labels don't both repeat
     // "Move chord".
     const moveGroup = (
-      container.querySelector('.chordsketch-sheet__cins-move') as HTMLElement
+      container.querySelector(`.${SLUG}-sheet__cins-move`) as HTMLElement
     ).parentElement as HTMLElement;
     const header = moveGroup.querySelector(
-      '.chordsketch-sheet__cins-label',
+      `.${SLUG}-sheet__cins-label`,
     ) as HTMLElement;
     const inline = moveGroup.querySelector(
-      '.chordsketch-sheet__cins-movelbl',
+      `.${SLUG}-sheet__cins-movelbl`,
     ) as HTMLElement;
     expect(header.textContent).toBe('Move chord');
     expect(inline.textContent).toBe('one step');
@@ -368,19 +369,19 @@ describe('<ChordInspector>', () => {
 
   test('Escape closes; the close button closes; Remove fires onRemove', () => {
     const { container, onClose, onRemove } = setup();
-    fireEvent.keyDown(container.querySelector('.chordsketch-sheet__cins') as HTMLElement, {
+    fireEvent.keyDown(container.querySelector(`.${SLUG}-sheet__cins`) as HTMLElement, {
       key: 'Escape',
     });
     expect(onClose).toHaveBeenCalledTimes(1);
-    fireEvent.click(container.querySelector('.chordsketch-sheet__cins-remove') as HTMLElement);
+    fireEvent.click(container.querySelector(`.${SLUG}-sheet__cins-remove`) as HTMLElement);
     expect(onRemove).toHaveBeenCalledTimes(1);
-    fireEvent.click(container.querySelector('.chordsketch-sheet__cins-close') as HTMLElement);
+    fireEvent.click(container.querySelector(`.${SLUG}-sheet__cins-close`) as HTMLElement);
     expect(onClose).toHaveBeenCalledTimes(2);
   });
 
   test('omitting onRemove hides the Remove button', () => {
     const { container } = setup({ onRemove: undefined });
-    expect(container.querySelector('.chordsketch-sheet__cins-remove')).toBeNull();
+    expect(container.querySelector(`.${SLUG}-sheet__cins-remove`)).toBeNull();
   });
 
   test('there is no longer a "Done" button (#2644)', () => {
@@ -394,22 +395,22 @@ describe('<ChordInspector>', () => {
       onRemove: undefined,
       onClose: undefined,
     });
-    const cins = container.querySelector('.chordsketch-sheet__cins') as HTMLElement;
+    const cins = container.querySelector(`.${SLUG}-sheet__cins`) as HTMLElement;
     expect(cins.getAttribute('data-mode')).toBe('idle');
     expect(getByText('No chord selected')).toBeTruthy();
-    expect(container.querySelector('.chordsketch-sheet__cins-idle-hint')).not.toBeNull();
+    expect(container.querySelector(`.${SLUG}-sheet__cins-idle-hint`)).not.toBeNull();
     // Edit-only: idle renders none of the editing controls.
-    expect(container.querySelector('.chordsketch-sheet__cins-seg')).toBeNull();
+    expect(container.querySelector(`.${SLUG}-sheet__cins-seg`)).toBeNull();
     expect(container.querySelector('button[aria-label="Move chord left"]')).toBeNull();
-    expect(container.querySelector('.chordsketch-sheet__cins-remove')).toBeNull();
+    expect(container.querySelector(`.${SLUG}-sheet__cins-remove`)).toBeNull();
   });
 
   test('there is no "Insert chord" button — the footer is edit-only (#2648)', () => {
     // Selected state: Remove present, never an Insert button.
     const { container, queryByText } = setup();
     expect(queryByText('Insert chord')).toBeNull();
-    expect(container.querySelector('.chordsketch-sheet__cins-insert')).toBeNull();
-    expect(container.querySelector('.chordsketch-sheet__cins-remove')).not.toBeNull();
+    expect(container.querySelector(`.${SLUG}-sheet__cins-insert`)).toBeNull();
+    expect(container.querySelector(`.${SLUG}-sheet__cins-remove`)).not.toBeNull();
   });
 
   test('the gated-editing note is shown in the idle state', () => {
@@ -425,8 +426,8 @@ describe('<ChordInspector>', () => {
   test('without onClose there is no close button and Escape is a no-op', () => {
     const onClose = vi.fn();
     const { container } = setup({ onClose: undefined });
-    expect(container.querySelector('.chordsketch-sheet__cins-close')).toBeNull();
-    fireEvent.keyDown(container.querySelector('.chordsketch-sheet__cins') as HTMLElement, {
+    expect(container.querySelector(`.${SLUG}-sheet__cins-close`)).toBeNull();
+    fireEvent.keyDown(container.querySelector(`.${SLUG}-sheet__cins`) as HTMLElement, {
       key: 'Escape',
     });
     expect(onClose).not.toHaveBeenCalled();

@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { initWasm } from './wasm-init';
 
 import type { ChordproSong } from './chordpro-ast';
+import { BRAND } from './brand.generated';
 
 // Narrow subset of `@chordsketch/wasm` this hook touches —
 // declared structurally so the React bundle does not pull the
@@ -189,7 +190,7 @@ export function useChordproAst(
         // consumer renders `error`, then surface it through `error`.
         if (typeof console !== 'undefined') {
           console.error(
-            '[@chordsketch/react] useChordproAst: failed to load @chordsketch/wasm',
+            `[${BRAND.consolePrefix}] useChordproAst: failed to load the wasm engine`,
             e,
           );
         }

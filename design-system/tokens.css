@@ -1,5 +1,5 @@
 /*
- * ChordSketch — Design Tokens
+ * Design Tokens
  *
  * Source of truth for color, typography, space, radius, elevation,
  * and motion. See DESIGN.md for usage guidance and rationale.
@@ -7,15 +7,30 @@
 
 :root {
   /* ---------- Color: Crimson (the only accent) ---------- */
-  --crimson-50:  #FDF2F5;
-  --crimson-100: #FBE1E8;
-  --crimson-300: #EC8AA3;
-  --crimson-500: #BD1642;
-  --crimson-600: #A30F37;
-  --crimson-700: #87092C;
-  --crimson-900: #480418;
-  --crimson:        var(--crimson-500);
-  --fg-on-crimson:  #FFFFFF;
+  /* The accent scale's values come from brand/brand.json ("accent"); run
+     node scripts/build-brand.mjs after changing them. The --crimson-* names
+     are the public contract (ADR-0038) and alias the brand-neutral
+     --accent-* tokens. */
+  --accent-50:  #F2F3F7;
+  --accent-100: #E5E7EE;
+  --accent-200: #C2C6D8;
+  --accent-300: #5B6FA9;
+  --accent-500: #243472;
+  --accent-600: #1F2C61;
+  --accent-700: #192450;
+  --accent-900: #0E152E;
+  --accent:        var(--accent-500);
+  --fg-on-accent:  #FFFFFF;
+  --crimson-50:  var(--accent-50);
+  --crimson-100: var(--accent-100);
+  --crimson-200: var(--accent-200);
+  --crimson-300: var(--accent-300);
+  --crimson-500: var(--accent-500);
+  --crimson-600: var(--accent-600);
+  --crimson-700: var(--accent-700);
+  --crimson-900: var(--accent-900);
+  --crimson:        var(--accent);
+  --fg-on-crimson:  var(--fg-on-accent);
 
   /* ---------- Color: Ink (warm neutrals) ---------- */
   --ink-0:    #FFFFFF;
@@ -23,9 +38,12 @@
   --ink-100:  #F6F4F7;
   --ink-200:  #E8E6EA;
   --ink-300:  #D4D1D6;
+  --ink-400:  #A8A4AD;
   --ink-500:  #8A8790;
   --ink-600:  #67646D;
   --ink-700:  #44424A;
+  --ink-800:  #2A262E;
+  --ink-900:  #1A1718;
   --ink-1000: #0A0A0B;
 
   /* Surface / border aliases */
@@ -34,6 +52,8 @@
   --surface-hover: var(--ink-100);
   --border:        var(--ink-200);
   --border-strong: var(--ink-300);
+  --surface-tint:  #FAFAFA;
+  --highlight-bg:  #FFF3A3;
 
   /* Text aliases */
   --text-primary:   var(--ink-1000);
@@ -57,9 +77,9 @@
   --focus-ring: 0 0 0 2px var(--ink-0), 0 0 0 4px var(--crimson-500);
 
   /* ---------- Typography: families ---------- */
-  --font-jp:      "Noto Sans JP", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
-  --font-display: "Noto Sans JP", system-ui, sans-serif;
-  --font-latin:   "Inter", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  --font-jp:      "Source Sans 3", "Source Sans Pro", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  --font-display: "Source Sans 3", "Source Sans Pro", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  --font-latin:   "Source Sans 3", "Source Sans Pro", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
   --font-mono:    "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
   --font-sans:    var(--font-jp);
   /* Chord glyphs (`[G]`, `Am7`) and section letters in chart-rendering

@@ -31,6 +31,7 @@ import { fileURLToPath } from "node:url";
 
 const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
 const TOKENS_CSS = join(repoRoot, "design-system/tokens.css");
+const BRAND_SLUG = JSON.parse(readFileSync(join(repoRoot, "brand/brand.json"), "utf8")).slug;
 
 const START =
   "/* @generated:start — DO NOT EDIT. Source: design-system/tokens.css. Run: node scripts/build-tokens.mjs */";
@@ -74,11 +75,9 @@ const TARGETS = [
   {
     path: "packages/react/src/styles.css",
     prefix: true,
-    selectors: [
-      ".chordsketch-chord-pro-editor", ".chordsketch-chord-pro-preview",
-      ".chordsketch-source-area", ".chordsketch-split-layout",
-      ".chordsketch-preview",
-    ],
+    // The component roots, under the brand's class prefix (brand/brand.json).
+    selectors: ["chord-pro-editor", "chord-pro-preview", "source-area", "split-layout", "preview"]
+      .map((name) => `.${BRAND_SLUG}-${name}`),
   },
   {
     path: "packages/ui-irealb-editor/src/style.css",

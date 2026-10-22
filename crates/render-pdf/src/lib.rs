@@ -299,10 +299,16 @@ impl PdfFormattingState {
 // Layout constants (units: PDF points, 1 pt = 1/72 inch)
 // ---------------------------------------------------------------------------
 
-/// A4 page width in points.
+/// A4 page width in points: the page width when `pdf.papersize` is unset.
 const PAGE_W: f32 = 595.0;
-/// A4 page height in points.
+/// A4 page height in points: the page height when `pdf.papersize` is unset.
 const PAGE_H: f32 = 842.0;
+/// US Letter page size in points (8.5 × 11 in).
+const LETTER: (f32, f32) = (612.0, 792.0);
+/// US Legal page size in points (8.5 × 14 in).
+const LEGAL: (f32, f32) = (612.0, 1008.0);
+/// Smallest and largest page side accepted from `pdf.papersize`, in points.
+const PAGE_SIDE_RANGE: std::ops::RangeInclusive<f32> = 72.0..=14_400.0;
 /// Left margin in points.
 const MARGIN_LEFT: f32 = 56.0;
 /// Top margin (distance from top of page).
@@ -710,7 +716,7 @@ pub fn render_songs_with_warnings(
         // Render page number right-aligned
         let num_str = page_num.to_string();
         let num_width = text_width(&num_str, TOC_ENTRY_SIZE);
-        let right_x = PAGE_W - toc_doc.margin_right - num_width;
+        let right_x = toc_doc.page_w - toc_doc.margin_right - num_width;
         toc_doc.text_at(&num_str, Font::Helvetica, TOC_ENTRY_SIZE, right_x, y);
 
         toc_doc.newline(TOC_ENTRY_SIZE + LINE_GAP);
@@ -1214,6 +1220,7 @@ fn render_lyrics_spans(lyrics: &LyricsLine, font_size: f32, doc: &mut PdfDocumen
     let y = doc.y();
     if clip {
         let clip_w = (col_right - x).max(0.0);
+        let page_h = doc.page_h;
         let ops = doc.current_page_mut();
         ops.push("q".to_string());
         ops.push(format!(
@@ -1221,7 +1228,7 @@ fn render_lyrics_spans(lyrics: &LyricsLine, font_size: f32, doc: &mut PdfDocumen
             fmt_f32(x),
             fmt_f32(0.0),
             fmt_f32(clip_w),
-            fmt_f32(PAGE_H)
+            fmt_f32(page_h)
         ));
     }
     for seg in &lyrics.segments {
@@ -1553,7 +1560,7 @@ fn render_image(attrs: &ImageAttributes, doc: &mut PdfDocument) {
 
     // Clamp to printable area (per-column width in multi-column layouts).
     let max_w = doc.column_width();
-    let max_h = PAGE_H - doc.margin_top - doc.margin_bottom;
+    let max_h = doc.page_h - doc.margin_top - doc.margin_bottom;
     let (render_w, render_h) = clamp_to_printable_area(render_w, render_h, max_w, max_h, aspect);
 
     doc.ensure_space(render_h + LINE_GAP);
@@ -1565,7 +1572,7 @@ fn render_image(attrs: &ImageAttributes, doc: &mut PdfDocument) {
             let col_w = doc.column_width();
             col_left + (col_w - render_w) / 2.0
         }
-        Some("paper") => (PAGE_W - render_w) / 2.0,
+        Some("paper") => (doc.page_w - render_w) / 2.0,
         _ => doc.margin_left(),
     };
 
@@ -1829,9 +1836,10 @@ fn render_chord_diagram_pdf(
         // fails CI rather than silently degrading.
         other => {
             eprintln!(
-                "chordsketch-render-pdf: unknown Orientation variant {other:?} \
+                "{}-render-pdf: unknown Orientation variant {other:?} \
                  fell through to vertical layout; teach render_chord_diagram_pdf \
                  about it",
+                chordsketch_chordpro::brand::CONSOLE_PREFIX,
             );
             debug_assert!(
                 false,
@@ -2787,6 +2795,9 @@ struct PdfDocument {
     current_column: u32,
     /// Embedded images (JPEG or PNG).
     images: Vec<EmbeddedImage>,
+    /// Page size in points, from `pdf.papersize` (A4 when unset).
+    page_w: f32,
+    page_h: f32,
     /// Layout margins (in points), overridable via config.
     margin_top: f32,
     margin_bottom: f32,
@@ -2828,6 +2839,8 @@ impl PdfDocument {
     fn with_margins(top: f32, bottom: f32, left: f32, right: f32) -> Self {
         Self {
             pages: vec![Vec::new()],
+            page_w: PAGE_W,
+            page_h: PAGE_H,
             y: PAGE_H - top,
             num_columns: 1,
             current_column: 0,
@@ -2942,7 +2955,42 @@ impl PdfDocument {
             .as_f64()
             .map(|v| Self::validate_margin(v as f32, MARGIN_RIGHT, "right", warnings))
             .unwrap_or(MARGIN_RIGHT);
-        Self::with_margins(top, bottom, left, right)
+        let mut doc = Self::with_margins(top, bottom, left, right);
+        let (page_w, page_h) = Self::page_size(config, warnings);
+        doc.page_w = page_w;
+        doc.page_h = page_h;
+        doc.y = page_h - top;
+        doc
+    }
+
+    /// The page size from `pdf.papersize`: `"a4"`, `"letter"` or `"legal"`
+    /// (any case), or `[width, height]` in points. Unset means A4; anything
+    /// else warns and falls back to A4.
+    fn page_size(config: &Config, warnings: &mut Vec<String>) -> (f32, f32) {
+        let value = config.get_path("pdf.papersize");
+        if value.is_null() {
+            return (PAGE_W, PAGE_H);
+        }
+        if let Some(name) = value.as_str() {
+            match name.to_ascii_lowercase().as_str() {
+                "a4" => return (PAGE_W, PAGE_H),
+                "letter" => return LETTER,
+                "legal" => return LEGAL,
+                _ => {}
+            }
+        } else if let Some([w, h]) = value.as_array()
+            && let (Some(w), Some(h)) = (w.as_f64(), h.as_f64())
+        {
+            let (w, h) = (w as f32, h as f32);
+            if PAGE_SIDE_RANGE.contains(&w) && PAGE_SIDE_RANGE.contains(&h) {
+                return (w, h);
+            }
+        }
+        push_warning(
+            warnings,
+            format!("invalid pdf.papersize {value:?}, using a4"),
+        );
+        (PAGE_W, PAGE_H)
     }
 
     /// Reset the document margins from a config, falling back to the built-in
@@ -2975,7 +3023,7 @@ impl PdfDocument {
             .map(|v| Self::validate_margin(v as f32, MARGIN_RIGHT, "right", warnings))
             .unwrap_or(MARGIN_RIGHT);
         if self.pages.last().is_some_and(Vec::is_empty) {
-            self.y = PAGE_H - self.margin_top;
+            self.y = self.page_h - self.margin_top;
         }
     }
 
@@ -3008,7 +3056,7 @@ impl PdfDocument {
     /// For single-column layouts this equals the full printable width.
     /// For multi-column layouts it accounts for inter-column gaps.
     fn column_width(&self) -> f32 {
-        let usable_width = PAGE_W - self.margin_left - self.margin_right;
+        let usable_width = self.page_w - self.margin_left - self.margin_right;
         if self.num_columns <= 1 {
             return usable_width;
         }
@@ -3031,7 +3079,7 @@ impl PdfDocument {
         }
         if self.current_column + 1 < self.num_columns {
             self.current_column += 1;
-            self.y = PAGE_H - self.margin_top;
+            self.y = self.page_h - self.margin_top;
         } else {
             self.new_page();
         }
@@ -3049,7 +3097,7 @@ impl PdfDocument {
     fn next_column_or_page(&mut self) {
         if self.num_columns > 1 && self.current_column + 1 < self.num_columns {
             self.current_column += 1;
-            self.y = PAGE_H - self.margin_top;
+            self.y = self.page_h - self.margin_top;
         } else {
             self.new_page();
         }
@@ -3064,7 +3112,7 @@ impl PdfDocument {
             return;
         }
         self.pages.push(Vec::new());
-        self.y = PAGE_H - self.margin_top;
+        self.y = self.page_h - self.margin_top;
         self.current_column = 0;
     }
 
@@ -3140,7 +3188,7 @@ impl PdfDocument {
                 fmt_f32(x),
                 fmt_f32(0.0),
                 fmt_f32(clip_w),
-                fmt_f32(PAGE_H)
+                fmt_f32(self.page_h)
             ));
         }
         let mut cur_x = x;
@@ -3198,7 +3246,7 @@ impl PdfDocument {
                 fmt_f32(x),
                 fmt_f32(0.0),
                 fmt_f32(clip_w),
-                fmt_f32(PAGE_H)
+                fmt_f32(self.page_h)
             ));
         }
         let mut cur_x = x;
@@ -3410,7 +3458,7 @@ impl PdfDocument {
     fn take_pages(&mut self) -> Vec<Vec<String>> {
         let pages = std::mem::take(&mut self.pages);
         self.pages.push(Vec::new());
-        self.y = PAGE_H - self.margin_top;
+        self.y = self.page_h - self.margin_top;
         self.current_column = 0;
         pages
     }
@@ -3493,8 +3541,8 @@ impl PdfDocument {
             .join(" ");
         let obj2 = format!(
             "2 0 obj\n<< /Type /Pages /MediaBox [0 0 {} {}] /Resources << /Font << {}{} >>{} {} >> /Kids [{}] /Count {} >>\nendobj\n",
-            fmt_f32(PAGE_W),
-            fmt_f32(PAGE_H),
+            fmt_f32(self.page_w),
+            fmt_f32(self.page_h),
             font_refs,
             cid_font_ref,
             xobject_refs,

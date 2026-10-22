@@ -213,8 +213,9 @@ pub fn validate_ambiguous_chords(song: &Song, warnings: &mut Vec<String>) {
                     warnings,
                     format!(
                         "chord {name:?} uses ambiguous extended notation; rendered as \
-                         {canonical:?}. ChordSketch prefers explicit notation — write \
+                         {canonical:?}. {product} prefers explicit notation — write \
                          {canonical}{alt}.",
+                        product = crate::brand::NAME,
                         name = chord.name,
                         canonical = suggestion.canonical,
                     ),
@@ -259,8 +260,8 @@ impl<T> RenderResult<T> {
         !self.warnings.is_empty()
     }
 
-    /// Hand every warning to `sink` as `chordsketch: <warning>` and return
-    /// the output.
+    /// Hand every warning to `sink` as `<prefix>: <warning>` and return
+    /// the output. `<prefix>` is `brand::CONSOLE_PREFIX` (`brand/brand.json`).
     ///
     /// For entry points that have no structured warnings channel: each one
     /// supplies the stream warnings belong on (standard error, a browser
@@ -268,7 +269,7 @@ impl<T> RenderResult<T> {
     #[must_use = "the rendered output is returned here"]
     pub fn forward_warnings(self, mut sink: impl FnMut(&str)) -> T {
         for w in &self.warnings {
-            sink(&format!("chordsketch: {w}"));
+            sink(&format!("{}: {w}", crate::brand::CONSOLE_PREFIX));
         }
         self.output
     }
@@ -293,7 +294,8 @@ mod tests {
         let mut seen = Vec::new();
         let output = result.forward_warnings(|m| seen.push(m.to_string()));
         assert_eq!(output, "output");
-        assert_eq!(seen, ["chordsketch: first", "chordsketch: second"]);
+        let prefix = crate::brand::CONSOLE_PREFIX;
+        assert_eq!(seen, [format!("{prefix}: first"), format!("{prefix}: second")]);
     }
 
     #[test]

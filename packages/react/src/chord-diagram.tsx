@@ -15,6 +15,7 @@ import {
   useChordDiagram,
   useChordDiagramPitches,
 } from './use-chord-diagram';
+import { SLUG } from './brand.generated';
 
 /** Props accepted by {@link ChordDiagram}. */
 export interface ChordDiagramProps extends Omit<HTMLAttributes<HTMLDivElement>, 'children'> {
@@ -103,7 +104,7 @@ function defaultNotFoundFallback(
   instrument: ChordDiagramInstrument,
 ): ReactNode {
   return (
-    <div role="note" className="chordsketch-diagram__notfound">
+    <div role="note" className={`${SLUG}-diagram__notfound`}>
       <strong>{chord}</strong>
       <span> — no {instrument} voicing in the built-in database</span>
     </div>
@@ -112,7 +113,7 @@ function defaultNotFoundFallback(
 
 function defaultErrorFallback(error: Error): ReactNode {
   return (
-    <div role="alert" className="chordsketch-diagram__error">
+    <div role="alert" className={`${SLUG}-diagram__error`}>
       {error.message}
     </div>
   );
@@ -120,7 +121,7 @@ function defaultErrorFallback(error: Error): ReactNode {
 
 function defaultLoadingFallback(): ReactNode {
   return (
-    <div role="status" aria-live="polite" className="chordsketch-diagram__loading">
+    <div role="status" aria-live="polite" className={`${SLUG}-diagram__loading`}>
       Loading diagram…
     </div>
   );
@@ -187,12 +188,12 @@ export function ChordDiagram({
     } else {
       chordAudio?.play(chord);
     }
-    if (ringRef.current) pulseElement(ringRef.current, 'chordsketch-diagram--ringing');
+    if (ringRef.current) pulseElement(ringRef.current, `${SLUG}-diagram--ringing`);
   }, [chordAudio, chord, diagramPitches]);
 
   const baseWrapperClass = [
-    'chordsketch-diagram',
-    compact && 'chordsketch-diagram--compact',
+    `${SLUG}-diagram`,
+    compact && `${SLUG}-diagram--compact`,
     className,
   ]
     .filter(Boolean)
@@ -202,7 +203,7 @@ export function ChordDiagram({
   // interactive. The error branch reuses `baseWrapperClass` so a failed
   // diagram never paints a clickable affordance it does not honour.
   const wrapperClass = audioOn
-    ? `${baseWrapperClass} chordsketch-diagram--audio`
+    ? `${baseWrapperClass} ${SLUG}-diagram--audio`
     : baseWrapperClass;
   // Surface the active orientation as a DOM attribute so consumers
   // and tests can observe it without parsing the SVG. Omitted (not
@@ -239,7 +240,7 @@ export function ChordDiagram({
         // Safety cleanup mirroring the walker's chord-name path: drop the
         // transient ring class once its animation ends.
         onAnimationEnd: (e: ReactAnimationEvent<HTMLDivElement>) => {
-          e.currentTarget.classList.remove('chordsketch-diagram--ringing');
+          e.currentTarget.classList.remove(`${SLUG}-diagram--ringing`);
         },
       }
     : null;

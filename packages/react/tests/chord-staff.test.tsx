@@ -12,6 +12,7 @@ import {
   staffStep,
 } from '../src/chord-staff';
 import type { ChordStaffWasmLoader, StaffNote } from '../src/use-chord-staff';
+import { SLUG } from '../src/brand.generated';
 
 // -- Fixtures ------------------------------------------------------
 
@@ -242,13 +243,13 @@ describe('<ChordStaff>', () => {
       <ChordStaff chord="Cmaj9" wasmLoader={makeLoader({ Cmaj9: CMAJ9 })} />,
     );
     await waitFor(() => {
-      expect(container.querySelector('.chordsketch-staff__svg')).not.toBeNull();
+      expect(container.querySelector(`.${SLUG}-staff__svg`)).not.toBeNull();
     });
-    const svg = container.querySelector('.chordsketch-staff__svg')!;
+    const svg = container.querySelector(`.${SLUG}-staff__svg`)!;
     expect(svg.getAttribute('aria-label')).toContain('Cmaj9');
     // Five staff lines + ledger line(s); five Bravura noteheads.
-    expect(svg.querySelectorAll('.chordsketch-staff__notehead')).toHaveLength(5);
-    expect(svg.querySelectorAll('.chordsketch-staff__note')).toHaveLength(5);
+    expect(svg.querySelectorAll(`.${SLUG}-staff__notehead`)).toHaveLength(5);
+    expect(svg.querySelectorAll(`.${SLUG}-staff__note`)).toHaveLength(5);
     // A treble clef path is drawn.
     expect(svg.querySelector('path')).not.toBeNull();
   });
@@ -262,13 +263,13 @@ describe('<ChordStaff>', () => {
       />,
     );
     await waitFor(() => {
-      expect(container.querySelector('.chordsketch-staff__svg')).not.toBeNull();
+      expect(container.querySelector(`.${SLUG}-staff__svg`)).not.toBeNull();
     });
     expect(
-      container.querySelector('.chordsketch-staff__svg')!.getAttribute('aria-label'),
+      container.querySelector(`.${SLUG}-staff__svg`)!.getAttribute('aria-label'),
     ).toContain('E♭m7');
     // One Bravura flat glyph (a `<path>`) accompanies each of the four tones.
-    const accidentals = container.querySelectorAll('.chordsketch-staff__accidental');
+    const accidentals = container.querySelectorAll(`.${SLUG}-staff__accidental`);
     expect(accidentals).toHaveLength(4);
     expect(accidentals[0]!.tagName.toLowerCase()).toBe('path');
     expect(accidentals[0]!.getAttribute('d')).toBe(ACCIDENTAL_FLAT.d);
@@ -279,14 +280,14 @@ describe('<ChordStaff>', () => {
       <ChordStaff chord="A" musicKey="D" wasmLoader={makeLoader({ A: A_MAJOR })} />,
     );
     await waitFor(() => {
-      expect(container.querySelector('.chordsketch-staff__svg')).not.toBeNull();
+      expect(container.querySelector(`.${SLUG}-staff__svg`)).not.toBeNull();
     });
-    const svg = container.querySelector('.chordsketch-staff__svg')!;
+    const svg = container.querySelector(`.${SLUG}-staff__svg`)!;
     // Two sharps drawn as signature glyphs, and the key is in the label.
-    expect(svg.querySelectorAll('.chordsketch-staff__signature')).toHaveLength(2);
+    expect(svg.querySelectorAll(`.${SLUG}-staff__signature`)).toHaveLength(2);
     expect(svg.getAttribute('aria-label')).toContain('in D');
     // C♯ is in the signature, so no inline note accidental is drawn.
-    expect(svg.querySelectorAll('.chordsketch-staff__accidental')).toHaveLength(0);
+    expect(svg.querySelectorAll(`.${SLUG}-staff__accidental`)).toHaveLength(0);
   });
 
   test('draws a natural glyph for an out-of-key tone', async () => {
@@ -294,9 +295,9 @@ describe('<ChordStaff>', () => {
       <ChordStaff chord="F" musicKey="G" wasmLoader={makeLoader({ F: F_MAJOR })} />,
     );
     await waitFor(() => {
-      expect(container.querySelector('.chordsketch-staff__svg')).not.toBeNull();
+      expect(container.querySelector(`.${SLUG}-staff__svg`)).not.toBeNull();
     });
-    const accidentals = container.querySelectorAll('.chordsketch-staff__accidental');
+    const accidentals = container.querySelectorAll(`.${SLUG}-staff__accidental`);
     // Exactly one inline accidental — the natural cancelling the F♯ signature.
     expect(accidentals).toHaveLength(1);
     expect(accidentals[0]!.getAttribute('d')).toBe(ACCIDENTAL_NATURAL.d);
@@ -307,12 +308,12 @@ describe('<ChordStaff>', () => {
       <ChordStaff chord="Ebm7" musicKey="C dorian" wasmLoader={makeLoader({ Ebm7: EBM7 })} />,
     );
     await waitFor(() => {
-      expect(container.querySelector('.chordsketch-staff__svg')).not.toBeNull();
+      expect(container.querySelector(`.${SLUG}-staff__svg`)).not.toBeNull();
     });
-    const svg = container.querySelector('.chordsketch-staff__svg')!;
+    const svg = container.querySelector(`.${SLUG}-staff__svg`)!;
     // No signature, and every flat tone spells inline (the pre-key behaviour).
-    expect(svg.querySelectorAll('.chordsketch-staff__signature')).toHaveLength(0);
-    expect(svg.querySelectorAll('.chordsketch-staff__accidental')).toHaveLength(4);
+    expect(svg.querySelectorAll(`.${SLUG}-staff__signature`)).toHaveLength(0);
+    expect(svg.querySelectorAll(`.${SLUG}-staff__accidental`)).toHaveLength(4);
     expect(svg.getAttribute('aria-label')).not.toContain('dorian');
   });
 
@@ -324,6 +325,6 @@ describe('<ChordStaff>', () => {
       const fig = container.querySelector('[role="img"]');
       expect(fig?.getAttribute('aria-label')).toContain('unavailable');
     });
-    expect(container.querySelector('.chordsketch-staff__svg')).toBeNull();
+    expect(container.querySelector(`.${SLUG}-staff__svg`)).toBeNull();
   });
 });

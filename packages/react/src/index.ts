@@ -149,6 +149,7 @@ export {
   ChordProEditor,
   type ChordProEditorProps,
 } from './chord-pro-editor';
+export { InsertToolbar, type InsertToolbarProps } from './insert-toolbar';
 
 // Source-side edit helpers. The drag-to-reposition contract
 // (`applyChordReposition` + `<ChordSheet>` / `renderChordproAst`'s

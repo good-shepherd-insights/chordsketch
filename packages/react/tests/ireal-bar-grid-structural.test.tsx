@@ -10,6 +10,7 @@ import type {
   IrealSong,
   IrealSectionLabel,
 } from '../src/ireal-ast';
+import { SLUG } from '../src/brand.generated';
 
 interface EditorStub {
   default: ReturnType<typeof vi.fn>;
@@ -238,7 +239,7 @@ describe('<IrealBarGrid> structural — active-bar reconciliation', () => {
   function focusedBarAriaLabel(): string | null {
     const tabZero = Array.from(
       document.querySelectorAll<HTMLButtonElement>(
-        '.chordsketch-ireal-bar-grid__bar',
+        `.${SLUG}-ireal-bar-grid__bar`,
       ),
     ).find((b) => b.getAttribute('tabindex') === '0');
     return tabZero?.getAttribute('aria-label') ?? null;
@@ -268,7 +269,7 @@ describe('<IrealBarGrid> structural — active-bar reconciliation', () => {
     // only one cell across both sections).
     const tabZero = Array.from(
       document.querySelectorAll<HTMLButtonElement>(
-        '.chordsketch-ireal-bar-grid__bar',
+        `.${SLUG}-ireal-bar-grid__bar`,
       ),
     ).filter((b) => b.getAttribute('tabindex') === '0');
     expect(tabZero.length).toBe(1);
@@ -287,13 +288,13 @@ describe('<IrealBarGrid> structural — active-bar reconciliation', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Delete section' }));
     await waitFor(() =>
       expect(
-        document.querySelectorAll('.chordsketch-ireal-bar-grid__bar').length,
+        document.querySelectorAll(`.${SLUG}-ireal-bar-grid__bar`).length,
       ).toBe(0),
     );
     // No cells left → no roving Tab stop.
     const tabZero = Array.from(
       document.querySelectorAll<HTMLButtonElement>(
-        '.chordsketch-ireal-bar-grid__bar',
+        `.${SLUG}-ireal-bar-grid__bar`,
       ),
     ).filter((b) => b.getAttribute('tabindex') === '0');
     expect(tabZero.length).toBe(0);

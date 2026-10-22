@@ -158,7 +158,7 @@ impl Drop for TempDirGuard {
 pub fn invoke_abc2svg(abc_content: &str) -> Result<String, String> {
     let sanitized = sanitize_abc_content(abc_content);
 
-    let tmp_path = unique_temp_path("chordsketch_abc", "abc");
+    let tmp_path = unique_temp_path(&format!("{}_abc", crate::brand::SLUG), "abc");
     // Guard is created before the write so that if write_temp_file_exclusive
     // creates the file with O_EXCL but then fails on write_all, the guard's
     // Drop still runs and removes the partially-created file. The `let _ =`
@@ -385,7 +385,8 @@ pub fn invoke_lilypond(ly_content: &str) -> Result<String, String> {
 
     let counter = TEMP_COUNTER.fetch_add(1, Ordering::Relaxed);
     let pid = std::process::id();
-    let tmp_dir = std::env::temp_dir().join(format!("chordsketch_ly_{pid}_{counter}"));
+    let tmp_dir =
+        std::env::temp_dir().join(format!("{}_ly_{pid}_{counter}", crate::brand::SLUG));
 
     // Use create_dir (not create_dir_all) to fail if the directory already exists,
     // preventing symlink-based attacks on predictable paths.
@@ -593,7 +594,8 @@ pub fn invoke_musescore(musicxml_content: &str) -> Result<String, String> {
 
     let counter = TEMP_COUNTER.fetch_add(1, Ordering::Relaxed);
     let pid = std::process::id();
-    let tmp_dir = std::env::temp_dir().join(format!("chordsketch_mxl_{pid}_{counter}"));
+    let tmp_dir =
+        std::env::temp_dir().join(format!("{}_mxl_{pid}_{counter}", crate::brand::SLUG));
 
     std::fs::create_dir(&tmp_dir).map_err(|e| format!("failed to create temp directory: {e}"))?;
     // Guard ensures the temp directory is removed on any exit path.

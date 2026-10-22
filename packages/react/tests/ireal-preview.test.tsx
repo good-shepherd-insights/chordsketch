@@ -3,6 +3,7 @@ import { describe, expect, test, vi } from 'vitest';
 
 import { IrealPreview } from '../src/ireal-preview';
 import type { IrealRenderLoader } from '../src/use-ireal-render';
+import { SLUG } from '../src/brand.generated';
 
 interface RenderStub {
   default: ReturnType<typeof vi.fn>;
@@ -42,7 +43,7 @@ describe('<IrealPreview>', () => {
     // Wait for the loader to settle so we know the effect has run.
     await waitFor(() => expect(stub.default).toHaveBeenCalled());
     expect(stub.renderIrealSvg).not.toHaveBeenCalled();
-    expect(container.querySelector('.chordsketch-ireal-preview__svg')).toBeNull();
+    expect(container.querySelector(`.${SLUG}-ireal-preview__svg`)).toBeNull();
   });
 
   test('renderer errors surface via the default alert', async () => {

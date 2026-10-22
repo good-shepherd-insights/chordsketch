@@ -37,6 +37,7 @@ import {
   type ChordproWasmLoader,
   useChordproAst,
 } from './use-chordpro-ast';
+import { SLUG } from './brand.generated';
 
 /** Props accepted by {@link ChordSheet}. */
 export interface ChordSheetProps extends Omit<HTMLAttributes<HTMLDivElement>, 'children'> {
@@ -307,7 +308,7 @@ function resolveSelectedChord(ast: ChordproSong, selection: ChordSelection): Res
 
 function defaultErrorFallback(error: Error): ReactNode {
   return (
-    <div role="alert" className="chordsketch-sheet__error">
+    <div role="alert" className={`${SLUG}-sheet__error`}>
       {error.message}
     </div>
   );
@@ -362,7 +363,7 @@ export function ChordSheet({
   className,
   ...divProps
 }: ChordSheetProps): JSX.Element {
-  const wrapperClass = ['chordsketch-sheet', className].filter(Boolean).join(' ');
+  const wrapperClass = [`${SLUG}-sheet`, className].filter(Boolean).join(' ');
 
   if (format === 'text') {
     return (
@@ -441,7 +442,7 @@ function ChordSheetTextBranch({
   return (
     <div {...divProps} className={wrapperClass} aria-busy={loading || undefined}>
       {errorNode}
-      <pre className="chordsketch-sheet__text">{output}</pre>
+      <pre className={`${SLUG}-sheet__text`}>{output}</pre>
     </div>
   );
 }
@@ -598,7 +599,7 @@ function ChordSheetAstBranch({
         root != null &&
         el != null &&
         root.contains(el) &&
-        el.closest(`${PREVIEW_SELECTION_KEEP}, .chordsketch-sheet__cins`)
+        el.closest(`${PREVIEW_SELECTION_KEEP}, .${SLUG}-sheet__cins`)
       ) {
         return;
       }
@@ -707,7 +708,7 @@ function ChordSheetAstBranch({
   return (
     <div {...divProps} ref={wrapperRef} className={wrapperClass} aria-busy={loading || undefined}>
       {errorNode}
-      <div className="chordsketch-sheet__content" ref={contentRef}>
+      <div className={`${SLUG}-sheet__content`} ref={contentRef}>
         {renderChordproAst(ast, {
           transposedKey,
           transposedKeyDirectives,

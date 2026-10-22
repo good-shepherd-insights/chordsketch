@@ -16,6 +16,7 @@ import type {
   ChordDiagramOrientation,
 } from './use-chord-diagram';
 import { type ChordRenderFormat, type ChordWasmLoader } from './use-chord-render';
+import { BRAND, SLUG } from './brand.generated';
 
 /** Preview format selectable in {@link RendererPreview}. */
 export type PreviewFormat = ChordRenderFormat | 'pdf';
@@ -37,7 +38,7 @@ export interface RendererPreviewProps extends Omit<HTMLAttributes<HTMLDivElement
    * `"pdf"` shows an export button that produces a PDF on demand.
    */
   format: PreviewFormat;
-  /** Filename used for the PDF download. Defaults to `"chordsketch-output.pdf"`. */
+  /** Filename used for the PDF download. Defaults to the brand's `pdfFilename` (`brand/brand.json`). */
   pdfFilename?: string;
   /**
    * The `PdfExport` component from `@chordsketch/react/pdf`, injected
@@ -187,7 +188,7 @@ export function RendererPreview({
   transpose,
   config,
   format,
-  pdfFilename = 'chordsketch-output.pdf',
+  pdfFilename = BRAND.pdfFilename,
   pdfExportComponent: PdfExportComponent,
   chordDiagramsInstrument,
   chordDiagramsOrientation,
@@ -207,25 +208,25 @@ export function RendererPreview({
   className,
   ...divProps
 }: RendererPreviewProps): JSX.Element {
-  const wrapperClass = ['chordsketch-preview', className].filter(Boolean).join(' ');
+  const wrapperClass = [`${SLUG}-preview`, className].filter(Boolean).join(' ');
 
   if (format === 'pdf') {
     return (
-      <div {...divProps} className={`${wrapperClass} chordsketch-preview--pdf`}>
+      <div {...divProps} className={`${wrapperClass} ${SLUG}-preview--pdf`}>
         {PdfExportComponent ? (
           <>
-            <p className="chordsketch-preview__hint">
+            <p className={`${SLUG}-preview__hint`}>
               Click the button to generate and download a PDF.
             </p>
             <PdfExportComponent
               source={source}
               options={{ transpose, config }}
               filename={pdfFilename}
-              className="chordsketch-pdf-export"
+              className={`${SLUG}-pdf-export`}
             />
           </>
         ) : (
-          <p role="alert" className="chordsketch-preview__hint">
+          <p role="alert" className={`${SLUG}-preview__hint`}>
             PDF export requires the <code>@chordsketch/react/pdf</code> entry
             point — import its <code>PdfExport</code> component and pass it
             via the <code>pdfExportComponent</code> prop.
@@ -238,7 +239,7 @@ export function RendererPreview({
   return (
     <ChordSheet
       {...divProps}
-      className={`${wrapperClass} chordsketch-preview--${format}`}
+      className={`${wrapperClass} ${SLUG}-preview--${format}`}
       source={source}
       format={format}
       transpose={transpose}

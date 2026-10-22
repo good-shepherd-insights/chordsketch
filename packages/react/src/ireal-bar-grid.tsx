@@ -36,6 +36,7 @@ import {
 } from './ireal-bar-grid-section-prompt';
 import { useAnnouncer } from './use-announcer';
 import { initWasm } from './wasm-init';
+import { SLUG } from './brand.generated';
 
 // Narrow subset of `@chordsketch/wasm` this component touches.
 // Defined structurally so the wasm glue does not enter the React
@@ -350,7 +351,7 @@ export function IrealBarGrid({
     if (errorFallback === null) return null;
     if (errorFallback === undefined) {
       return (
-        <p className="chordsketch-ireal-bar-grid__error" role="alert">
+        <p className={`${SLUG}-ireal-bar-grid__error`} role="alert">
           {error.message}
         </p>
       );
@@ -554,7 +555,7 @@ export function IrealBarGrid({
     const active = (typeof document !== 'undefined'
       ? (document.activeElement as HTMLElement | null)
       : null);
-    if (active !== null && active.classList?.contains('chordsketch-ireal-bar-grid__bar')) {
+    if (active !== null && active.classList?.contains(`${SLUG}-ireal-bar-grid__bar`)) {
       popoverAnchorRef.current = active;
     }
     setPopoverTarget({ secIndex, barIndex });
@@ -604,14 +605,14 @@ export function IrealBarGrid({
     }
   }, [popoverTarget, popoverBar]);
 
-  const wrapperClass = ['chordsketch-ireal-bar-grid', className]
+  const wrapperClass = [`${SLUG}-ireal-bar-grid`, className]
     .filter((c): c is string => typeof c === 'string' && c.length > 0)
     .join(' ');
 
   if (song === null && error === null) {
     return (
       <div className={wrapperClass} style={style} aria-busy="true">
-        <p className="chordsketch-ireal-bar-grid__loading">Loading…</p>
+        <p className={`${SLUG}-ireal-bar-grid__loading`}>Loading…</p>
       </div>
     );
   }
@@ -622,9 +623,9 @@ export function IrealBarGrid({
       {errorNode}
       {song !== null ? (
         <>
-          <fieldset className="chordsketch-ireal-bar-grid__metadata" disabled={disabled}>
+          <fieldset className={`${SLUG}-ireal-bar-grid__metadata`} disabled={disabled}>
             <legend>Chart metadata</legend>
-            <label className="chordsketch-ireal-bar-grid__field">
+            <label className={`${SLUG}-ireal-bar-grid__field`}>
               <span>Title</span>
               <input
                 type="text"
@@ -632,7 +633,7 @@ export function IrealBarGrid({
                 onChange={(e) => emit({ ...song, title: e.target.value })}
               />
             </label>
-            <label className="chordsketch-ireal-bar-grid__field">
+            <label className={`${SLUG}-ireal-bar-grid__field`}>
               <span>Composer</span>
               <input
                 type="text"
@@ -642,7 +643,7 @@ export function IrealBarGrid({
                 }
               />
             </label>
-            <label className="chordsketch-ireal-bar-grid__field">
+            <label className={`${SLUG}-ireal-bar-grid__field`}>
               <span>Style</span>
               <input
                 type="text"
@@ -652,8 +653,8 @@ export function IrealBarGrid({
                 }
               />
             </label>
-            <div className="chordsketch-ireal-bar-grid__key">
-              <label className="chordsketch-ireal-bar-grid__field">
+            <div className={`${SLUG}-ireal-bar-grid__key`}>
+              <label className={`${SLUG}-ireal-bar-grid__field`}>
                 <span>Key root</span>
                 <select
                   value={song.key_signature.root.note}
@@ -674,7 +675,7 @@ export function IrealBarGrid({
                   ))}
                 </select>
               </label>
-              <label className="chordsketch-ireal-bar-grid__field">
+              <label className={`${SLUG}-ireal-bar-grid__field`}>
                 <span>Accidental</span>
                 <select
                   value={song.key_signature.root.accidental}
@@ -698,7 +699,7 @@ export function IrealBarGrid({
                   ))}
                 </select>
               </label>
-              <label className="chordsketch-ireal-bar-grid__field">
+              <label className={`${SLUG}-ireal-bar-grid__field`}>
                 <span>Mode</span>
                 <select
                   value={song.key_signature.mode}
@@ -720,8 +721,8 @@ export function IrealBarGrid({
                 </select>
               </label>
             </div>
-            <div className="chordsketch-ireal-bar-grid__time">
-              <label className="chordsketch-ireal-bar-grid__field">
+            <div className={`${SLUG}-ireal-bar-grid__time`}>
+              <label className={`${SLUG}-ireal-bar-grid__field`}>
                 <span>Time num.</span>
                 <select
                   value={song.time_signature.numerator}
@@ -742,7 +743,7 @@ export function IrealBarGrid({
                   ))}
                 </select>
               </label>
-              <label className="chordsketch-ireal-bar-grid__field">
+              <label className={`${SLUG}-ireal-bar-grid__field`}>
                 <span>Time denom.</span>
                 <select
                   value={song.time_signature.denominator}
@@ -764,7 +765,7 @@ export function IrealBarGrid({
                 </select>
               </label>
             </div>
-            <label className="chordsketch-ireal-bar-grid__field">
+            <label className={`${SLUG}-ireal-bar-grid__field`}>
               <span>Tempo</span>
               <input
                 type="number"
@@ -784,7 +785,7 @@ export function IrealBarGrid({
                 }}
               />
             </label>
-            <label className="chordsketch-ireal-bar-grid__field">
+            <label className={`${SLUG}-ireal-bar-grid__field`}>
               <span>Transpose</span>
               <input
                 type="number"
@@ -823,7 +824,7 @@ export function IrealBarGrid({
             />
           ) : null}
           {showUrl ? (
-            <label className="chordsketch-ireal-bar-grid__url">
+            <label className={`${SLUG}-ireal-bar-grid__url`}>
               <span>URL</span>
               <textarea
                 value={urlDraft}

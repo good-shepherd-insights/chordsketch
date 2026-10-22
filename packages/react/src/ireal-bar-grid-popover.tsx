@@ -43,6 +43,7 @@ import {
   type IrealMusicalSymbol,
 } from './ireal-ast';
 import { useFocusTrap } from './use-focus-trap';
+import { SLUG } from './brand.generated';
 
 // ---------------------------------------------------------------------------
 // Static option tables — mirror sister-site at
@@ -305,17 +306,17 @@ export function IrealBarPopover({
   return (
     <div
       ref={dialogRef}
-      className="chordsketch-ireal-bar-grid__popover"
+      className={`${SLUG}-ireal-bar-grid__popover`}
       role="dialog"
       aria-modal="true"
       aria-label="Edit bar"
       tabIndex={-1}
     >
-      <div className="chordsketch-ireal-bar-grid__popover-body">
+      <div className={`${SLUG}-ireal-bar-grid__popover-body`}>
         <BarLineSelect label="Start barline" value={start} onChange={setStart} />
         <BarLineSelect label="End barline" value={end} onChange={setEnd} />
 
-        <div className="chordsketch-ireal-bar-grid__popover-section">
+        <div className={`${SLUG}-ireal-bar-grid__popover-section`}>
           <h4>Chords</h4>
           {chords.map((bc, index) => (
             <ChordRowEditor
@@ -331,7 +332,7 @@ export function IrealBarPopover({
           ))}
           <button
             type="button"
-            className="chordsketch-ireal-bar-grid__popover-addrow"
+            className={`${SLUG}-ireal-bar-grid__popover-addrow`}
             onClick={addChord}
           >
             + Add chord
@@ -342,17 +343,17 @@ export function IrealBarPopover({
         <SymbolPicker value={symbol} onChange={setSymbol} />
       </div>
 
-      <div className="chordsketch-ireal-bar-grid__popover-footer">
+      <div className={`${SLUG}-ireal-bar-grid__popover-footer`}>
         <button
           type="button"
-          className="chordsketch-ireal-bar-grid__popover-cancel"
+          className={`${SLUG}-ireal-bar-grid__popover-cancel`}
           onClick={onDismiss}
         >
           Cancel
         </button>
         <button
           type="button"
-          className="chordsketch-ireal-bar-grid__popover-save"
+          className={`${SLUG}-ireal-bar-grid__popover-save`}
           onClick={handleSave}
         >
           Save
@@ -374,7 +375,7 @@ interface BarLineSelectProps {
 
 function BarLineSelect({ label, value, onChange }: BarLineSelectProps): ReactElement {
   return (
-    <label className="chordsketch-ireal-bar-grid__field">
+    <label className={`${SLUG}-ireal-bar-grid__field`}>
       <span>{label}</span>
       <select
         value={value}
@@ -530,10 +531,10 @@ function ChordRowEditor({
 
   return (
     <div
-      className="chordsketch-ireal-bar-grid__popover-chordrow"
+      className={`${SLUG}-ireal-bar-grid__popover-chordrow`}
       data-row-index={index}
     >
-      <label className="chordsketch-ireal-bar-grid__field">
+      <label className={`${SLUG}-ireal-bar-grid__field`}>
         <span>Root</span>
         <select
           value={barChord.chord.root.note}
@@ -546,7 +547,7 @@ function ChordRowEditor({
           ))}
         </select>
       </label>
-      <label className="chordsketch-ireal-bar-grid__field">
+      <label className={`${SLUG}-ireal-bar-grid__field`}>
         <span>Acc.</span>
         <select
           value={barChord.chord.root.accidental}
@@ -559,7 +560,7 @@ function ChordRowEditor({
           ))}
         </select>
       </label>
-      <label className="chordsketch-ireal-bar-grid__field">
+      <label className={`${SLUG}-ireal-bar-grid__field`}>
         <span>Quality</span>
         <select
           value={barChord.chord.quality.kind}
@@ -575,7 +576,7 @@ function ChordRowEditor({
         </select>
       </label>
       {barChord.chord.quality.kind === 'custom' && (
-        <label className="chordsketch-ireal-bar-grid__field">
+        <label className={`${SLUG}-ireal-bar-grid__field`}>
           <span>Custom</span>
           <input
             type="text"
@@ -591,10 +592,10 @@ function ChordRowEditor({
           footer offers (`<ChordInspector>`) — and the free-form field
           beside it stays as the escape hatch, keeping `parseBassInput`'s
           three-valued path for a bass the picker cannot express. */}
-      <div className="chordsketch-ireal-bar-grid__popover-bass">
-        <span className="chordsketch-ireal-bar-grid__popover-basslabel">Bass</span>
+      <div className={`${SLUG}-ireal-bar-grid__popover-bass`}>
+        <span className={`${SLUG}-ireal-bar-grid__popover-basslabel`}>Bass</span>
         <div
-          className="chordsketch-ireal-bar-grid__seg"
+          className={`${SLUG}-ireal-bar-grid__seg`}
           role="group"
           aria-label="Bass note"
         >
@@ -621,7 +622,7 @@ function ChordRowEditor({
           ))}
         </div>
         <div
-          className="chordsketch-ireal-bar-grid__seg"
+          className={`${SLUG}-ireal-bar-grid__seg`}
           role="group"
           aria-label="Bass accidental"
         >
@@ -640,19 +641,19 @@ function ChordRowEditor({
             </button>
           ))}
         </div>
-        <label className="chordsketch-ireal-bar-grid__field">
+        <label className={`${SLUG}-ireal-bar-grid__field`}>
           <span>/ Bass</span>
           <input
             type="text"
             placeholder="G, F♯…"
             value={bassRaw}
             onChange={(e) => handleBassChange(e.target.value)}
-            className={bassInvalid ? 'chordsketch-ireal-bar-grid__input--invalid' : undefined}
+            className={bassInvalid ? `${SLUG}-ireal-bar-grid__input--invalid` : undefined}
             aria-invalid={bassInvalid || undefined}
           />
         </label>
       </div>
-      <label className="chordsketch-ireal-bar-grid__field">
+      <label className={`${SLUG}-ireal-bar-grid__field`}>
         <span>Pos.</span>
         <select
           value={encodeBeatPosition(barChord.position.beat, barChord.position.subdivision)}
@@ -667,7 +668,7 @@ function ChordRowEditor({
       </label>
       <button
         type="button"
-        className="chordsketch-ireal-bar-grid__popover-rowbtn"
+        className={`${SLUG}-ireal-bar-grid__popover-rowbtn`}
         aria-label="Move chord up"
         onClick={onMoveUp}
         disabled={index === 0}
@@ -676,7 +677,7 @@ function ChordRowEditor({
       </button>
       <button
         type="button"
-        className="chordsketch-ireal-bar-grid__popover-rowbtn"
+        className={`${SLUG}-ireal-bar-grid__popover-rowbtn`}
         aria-label="Move chord down"
         onClick={onMoveDown}
         disabled={index === count - 1}
@@ -685,7 +686,7 @@ function ChordRowEditor({
       </button>
       <button
         type="button"
-        className="chordsketch-ireal-bar-grid__popover-rowbtn"
+        className={`${SLUG}-ireal-bar-grid__popover-rowbtn`}
         aria-label="Remove chord"
         onClick={onRemove}
       >
@@ -703,7 +704,7 @@ interface EndingInputProps {
 
 function EndingInput({ value, onChange }: EndingInputProps): ReactElement {
   return (
-    <label className="chordsketch-ireal-bar-grid__field">
+    <label className={`${SLUG}-ireal-bar-grid__field`}>
       <span>N-th ending</span>
       <input
         type="number"
@@ -739,7 +740,7 @@ interface SymbolPickerProps {
 
 function SymbolPicker({ value, onChange }: SymbolPickerProps): ReactElement {
   return (
-    <label className="chordsketch-ireal-bar-grid__field">
+    <label className={`${SLUG}-ireal-bar-grid__field`}>
       <span>Symbol</span>
       <select
         value={value ?? ''}

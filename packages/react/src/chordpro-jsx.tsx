@@ -92,6 +92,7 @@ import {
   repositionedChordOrdinal,
 } from './chord-source-edit';
 import type { ChordRepositionEvent } from './chord-source-edit';
+import { BRAND } from './brand.generated';
 
 // ---- Sanitiser helpers --------------------------------------------
 
@@ -293,11 +294,11 @@ function renderSpan(span: ChordproTextSpan, key: number): ReactNode {
       const unknownKind = (span as { kind?: string } | null | undefined)?.kind ?? 'unknown';
       if (typeof console !== 'undefined') {
         console.warn(
-          `[@chordsketch/react] AST walker has no renderer for TextSpan.kind="${unknownKind}" — placeholder emitted`,
+          `[${BRAND.consolePrefix}] AST walker has no renderer for TextSpan.kind="${unknownKind}" — placeholder emitted`,
         );
       }
       return (
-        <span key={key} data-chordsketch-unknown-span={unknownKind} aria-hidden="true" />
+        <span key={key} {...{ [`data-${BRAND.slug}-unknown-span`]: unknownKind }} aria-hidden="true" />
       );
     }
   }
@@ -2534,7 +2535,7 @@ function buildChordDragProps(
 /** Custom mime type for the chord drag payload — disambiguates
  * our drags from OS file drags and from `text/plain` payloads
  * that other tabs might emit. Kept private to the package. */
-const CHORD_DRAG_MIME = 'application/x-chordsketch-chord';
+const CHORD_DRAG_MIME = BRAND.dragMime;
 
 interface ChordDragPayload {
   fromLine: number;
@@ -2545,7 +2546,7 @@ interface ChordDragPayload {
 
 /**
  * Validate a parsed `ChordDragPayload`. The dataTransfer mime
- * gate (`application/x-chordsketch-chord`) only proves the
+ * gate (the brand's `dragMime`) only proves the
  * payload claims to be ours — a cross-origin drag source can
  * forge that mime and stuff arbitrary content into the JSON
  * blob. Without validation, `applyChordReposition` would

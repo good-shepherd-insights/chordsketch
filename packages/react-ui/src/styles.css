@@ -38,15 +38,26 @@
 .pane-body,
 .stack {
   /* Crimson — the only accent. */
-  --cs-crimson-50: #FDF2F5;
-  --cs-crimson-100: #FBE1E8;
-  --cs-crimson-300: #EC8AA3;
-  --cs-crimson-500: #BD1642;
-  --cs-crimson-600: #A30F37;
-  --cs-crimson-700: #87092C;
-  --cs-crimson-900: #480418;
-  --cs-crimson: var(--cs-crimson-500);
-  --cs-fg-on-crimson: #FFFFFF;
+  --cs-accent-50: #F2F3F7;
+  --cs-accent-100: #E5E7EE;
+  --cs-accent-200: #C2C6D8;
+  --cs-accent-300: #5B6FA9;
+  --cs-accent-500: #243472;
+  --cs-accent-600: #1F2C61;
+  --cs-accent-700: #192450;
+  --cs-accent-900: #0E152E;
+  --cs-accent: var(--cs-accent-500);
+  --cs-fg-on-accent: #FFFFFF;
+  --cs-crimson-50: var(--cs-accent-50);
+  --cs-crimson-100: var(--cs-accent-100);
+  --cs-crimson-200: var(--cs-accent-200);
+  --cs-crimson-300: var(--cs-accent-300);
+  --cs-crimson-500: var(--cs-accent-500);
+  --cs-crimson-600: var(--cs-accent-600);
+  --cs-crimson-700: var(--cs-accent-700);
+  --cs-crimson-900: var(--cs-accent-900);
+  --cs-crimson: var(--cs-accent);
+  --cs-fg-on-crimson: var(--cs-fg-on-accent);
 
   /* Ink — warm neutrals. */
   --cs-ink-0: #FFFFFF;
@@ -54,9 +65,12 @@
   --cs-ink-100: #F6F4F7;
   --cs-ink-200: #E8E6EA;
   --cs-ink-300: #D4D1D6;
+  --cs-ink-400: #A8A4AD;
   --cs-ink-500: #8A8790;
   --cs-ink-600: #67646D;
   --cs-ink-700: #44424A;
+  --cs-ink-800: #2A262E;
+  --cs-ink-900: #1A1718;
   --cs-ink-1000: #0A0A0B;
 
   /* Surface / border / text aliases. */
@@ -65,6 +79,8 @@
   --cs-surface-hover: var(--cs-ink-100);
   --cs-border: var(--cs-ink-200);
   --cs-border-strong: var(--cs-ink-300);
+  --cs-surface-tint: #FAFAFA;
+  --cs-highlight-bg: #FFF3A3;
   --cs-text-primary: var(--cs-ink-1000);
   --cs-text-strong: var(--cs-ink-700);
   --cs-text-secondary: var(--cs-ink-600);
@@ -84,9 +100,9 @@
   --cs-focus-ring: 0 0 0 2px var(--cs-ink-0), 0 0 0 4px var(--cs-crimson-500);
 
   /* Typography families. */
-  --cs-font-jp: "Noto Sans JP", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
-  --cs-font-display: "Noto Sans JP", system-ui, sans-serif;
-  --cs-font-latin: "Inter", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  --cs-font-jp: "Source Sans 3", "Source Sans Pro", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  --cs-font-display: "Source Sans 3", "Source Sans Pro", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  --cs-font-latin: "Source Sans 3", "Source Sans Pro", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
   --cs-font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
   --cs-font-sans: var(--cs-font-jp);
   --cs-font-chord: "Roboto", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;

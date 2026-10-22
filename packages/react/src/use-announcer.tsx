@@ -1,4 +1,5 @@
 import { type ReactNode, useCallback, useRef, useState } from 'react';
+import { SLUG } from './brand.generated';
 
 /**
  * Hook that owns a polite ARIA live region for structural-edit
@@ -82,7 +83,7 @@ export function useAnnouncer(): UseAnnouncerResult {
 
   const liveRegion = (
     <div
-      className="chordsketch-ireal-bar-grid__sr-only chordsketch-ireal-bar-grid__live"
+      className={`${SLUG}-ireal-bar-grid__sr-only ${SLUG}-ireal-bar-grid__live`}
       role="status"
       aria-live="polite"
       aria-atomic="true"

@@ -16,6 +16,7 @@ import {
   type StaffNote,
   useChordStaff,
 } from './use-chord-staff';
+import { SLUG } from './brand.generated';
 
 // ---- Staff geometry ---------------------------------------------
 //
@@ -449,7 +450,7 @@ export interface ChordStaffProps extends Omit<HTMLAttributes<HTMLDivElement>, 'c
 
 function defaultLoadingFallback(): ReactNode {
   return (
-    <div role="status" aria-live="polite" className="chordsketch-staff__loading">
+    <div role="status" aria-live="polite" className={`${SLUG}-staff__loading`}>
       Loading staff…
     </div>
   );
@@ -483,7 +484,7 @@ export function ChordStaff({
 }: ChordStaffProps): JSX.Element {
   const { notes, loading } = useChordStaff(chord, wasmLoader);
   const keySig = staffKeySignature(musicKey);
-  const wrapperClass = ['chordsketch-staff', className].filter(Boolean).join(' ');
+  const wrapperClass = [`${SLUG}-staff`, className].filter(Boolean).join(' ');
   // The key only narrows how accidentals are drawn; when the chord renders
   // against a tonal key, name it in the accessible label so a screen-reader
   // user knows the signature applies (e.g. "… on a staff in D"). A non-null
@@ -520,7 +521,7 @@ export function ChordStaff({
         viewBox={`0 0 ${model.width.toFixed(2)} ${model.height.toFixed(2)}`}
         width={model.width}
         height={model.height}
-        className="chordsketch-staff__svg"
+        className={`${SLUG}-staff__svg`}
         role="img"
         aria-label={label}
       >
@@ -542,7 +543,7 @@ export function ChordStaff({
         {model.signature.map((sig, i) => (
           <path
             key={`sig-${i}`}
-            className="chordsketch-staff__signature"
+            className={`${SLUG}-staff__signature`}
             d={accidentalFor(sig.kind).d}
             transform={smuflTransform({
               staffSpace: LINE_GAP,
@@ -558,7 +559,7 @@ export function ChordStaff({
         {model.columns.map((col, i) => {
           const accKind = col.accKind;
           return (
-            <g key={`note-${i}`} className="chordsketch-staff__note">
+            <g key={`note-${i}`} className={`${SLUG}-staff__note`}>
               {col.ledgerYs.map((y, j) => (
                 <line
                   key={`ledger-${i}-${j}`}
@@ -574,7 +575,7 @@ export function ChordStaff({
                 ? col.accXs.map((ax, j) => (
                     <path
                       key={`acc-${i}-${j}`}
-                      className="chordsketch-staff__accidental"
+                      className={`${SLUG}-staff__accidental`}
                       d={accidentalFor(accKind).d}
                       transform={smuflTransform({
                         staffSpace: LINE_GAP,
@@ -588,7 +589,7 @@ export function ChordStaff({
                   ))
                 : null}
               <path
-                className="chordsketch-staff__notehead"
+                className={`${SLUG}-staff__notehead`}
                 d={NOTEHEAD_BLACK.d}
                 transform={smuflTransform({
                   staffSpace: LINE_GAP,

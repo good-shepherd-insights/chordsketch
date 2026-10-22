@@ -4,6 +4,7 @@ import { describe, expect, test, vi } from 'vitest';
 import { IrealBarGrid } from '../src/ireal-bar-grid';
 import type { IrealBarGridLoader } from '../src/ireal-bar-grid';
 import type { IrealSong } from '../src/ireal-ast';
+import { SLUG } from '../src/brand.generated';
 
 interface EditorStub {
   default: ReturnType<typeof vi.fn>;
@@ -75,7 +76,7 @@ describe('<IrealBarGrid>', () => {
         resolve = (s) => res(s as unknown as Awaited<ReturnType<IrealBarGridLoader>>);
       });
     const { container } = render(<IrealBarGrid source="irealb://x" loader={loader} />);
-    expect(container.querySelector('.chordsketch-ireal-bar-grid__loading')).toBeTruthy();
+    expect(container.querySelector(`.${SLUG}-ireal-bar-grid__loading`)).toBeTruthy();
     const stub = makeStub();
     resolve(stub);
     await waitFor(() => expect(stub.parseIrealb).toHaveBeenCalled());

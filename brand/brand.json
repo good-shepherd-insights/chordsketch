@@ -1,0 +1,43 @@
+{
+  "$comment": "The single source of every brand value: product name, names that identify it in output, logo, accent colour scale, neutrals and font families. Edit this file only, then run `node scripts/build-brand.mjs` (and `node scripts/build-tokens.mjs`). The generator writes it into design-system/tokens.css, packages/react/src/brand.generated.ts, packages/react/src/styles.css (logo mark) and crates/chordpro/src/brand.rs.",
+  "name": "Vision School",
+  "slug": "visionschool",
+  "consolePrefix": "visionschool",
+  "pdfFilename": "visionschool-chord-sheet.pdf",
+  "dragMime": "application/x-visionschool-chord",
+  "logo": "brand/logo.svg",
+  "accent": {
+    "50": "#F2F3F7",
+    "100": "#E5E7EE",
+    "200": "#C2C6D8",
+    "300": "#5B6FA9",
+    "500": "#243472",
+    "600": "#1F2C61",
+    "700": "#192450",
+    "900": "#0E152E",
+    "fg": "#FFFFFF"
+  },
+  "neutral": {
+    "0": "#FFFFFF",
+    "50": "#FAFAF7",
+    "100": "#F6F4F7",
+    "200": "#E8E6EA",
+    "300": "#D4D1D6",
+    "400": "#A8A4AD",
+    "500": "#8A8790",
+    "600": "#67646D",
+    "700": "#44424A",
+    "800": "#2A262E",
+    "900": "#1A1718",
+    "1000": "#0A0A0B"
+  },
+  "fonts": {
+    "jp": "\"Source Sans 3\", \"Source Sans Pro\", system-ui, -apple-system, \"Helvetica Neue\", Arial, sans-serif",
+    "display": "\"Source Sans 3\", \"Source Sans Pro\", system-ui, -apple-system, \"Helvetica Neue\", Arial, sans-serif",
+    "latin": "\"Source Sans 3\", \"Source Sans Pro\", system-ui, -apple-system, \"Helvetica Neue\", Arial, sans-serif",
+    "mono": "\"JetBrains Mono\", ui-monospace, \"SF Mono\", Menlo, Consolas, monospace",
+    "chord": "\"Roboto\", system-ui, -apple-system, \"Helvetica Neue\", Arial, sans-serif",
+    "chart-serif": "\"Source Serif 4\", Georgia, \"Times New Roman\", serif",
+    "music": "\"Bravura Text\", \"Noto Music\", \"Symbola\", serif"
+  }
+}

@@ -2,6 +2,7 @@ import type { ChangeEvent, HTMLAttributes } from 'react';
 import { useCallback, useMemo } from 'react';
 
 import { clamp as clampValue } from './clamp';
+import { SLUG } from './brand.generated';
 
 /**
  * Default minimum the `<Transpose>` select exposes when the host
@@ -142,15 +143,15 @@ export function Transpose({
       {...divProps}
       role="group"
       aria-label={ariaLabel}
-      className={['chordsketch-transpose', className].filter(Boolean).join(' ')}
+      className={[`${SLUG}-transpose`, className].filter(Boolean).join(' ')}
     >
       {label !== null ? (
-        <span className="chordsketch-transpose__label" aria-hidden="true">
+        <span className={`${SLUG}-transpose__label`} aria-hidden="true">
           {label}
         </span>
       ) : null}
       <select
-        className="chordsketch-transpose__select"
+        className={`${SLUG}-transpose__select`}
         value={displayValue}
         onChange={handleSelectChange}
         aria-label={ariaLabel}

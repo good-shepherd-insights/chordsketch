@@ -2,6 +2,7 @@
 
 pub mod abc_importer;
 pub mod ast;
+pub mod brand;
 pub mod chord;
 pub mod chord_diagram;
 pub mod config;

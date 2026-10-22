@@ -2,6 +2,7 @@ import { act, fireEvent, render, renderHook, screen } from '@testing-library/rea
 import { describe, expect, test, vi } from 'vitest';
 
 import { Transpose, useTranspose } from '../src/index';
+import { SLUG } from '../src/brand.generated';
 
 function getSelect(): HTMLSelectElement {
   return screen.getByRole('combobox', { name: 'Transpose' }) as HTMLSelectElement;
@@ -116,7 +117,7 @@ describe('<Transpose>', () => {
   test('forwards unknown props to the wrapper div', () => {
     render(<Transpose value={0} onChange={vi.fn()} data-testid="t" className="custom" />);
     const wrapper = screen.getByTestId('t');
-    expect(wrapper.className).toContain('chordsketch-transpose');
+    expect(wrapper.className).toContain(`${SLUG}-transpose`);
     expect(wrapper.className).toContain('custom');
   });
 

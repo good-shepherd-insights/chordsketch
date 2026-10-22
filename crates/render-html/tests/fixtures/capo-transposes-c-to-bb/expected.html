@@ -5,17 +5,17 @@
 <title>Capo Two</title>
 <style>
 body { font-family: "Noto Sans JP", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif; font-size: 1rem; line-height: 1.6875; color: #0A0A0B; max-width: 720px; margin: 2em auto; padding: 0 1em; }
-h1 { font-family: "Noto Sans JP", system-ui, -apple-system, sans-serif; font-weight: 700; font-size: 1.875rem; letter-spacing: -0.02em; color: #0A0A0B; margin-bottom: 0.2em; }
-h2 { font-family: "Noto Sans JP", system-ui, -apple-system, sans-serif; font-weight: 400; font-size: 1rem; color: #67646D; margin-top: 0; }
+h1 { font-family: "Noto Sans JP", system-ui, sans-serif; font-weight: 700; font-size: 1.875rem; letter-spacing: -0.02em; color: #0A0A0B; margin-bottom: 0.2em; }
+h2 { font-family: "Noto Sans JP", system-ui, sans-serif; font-weight: 400; font-size: 1rem; color: #67646D; margin-top: 0; }
 .meta { font-family: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 0.8125rem; color: #67646D; margin: 0 0 0.4em; font-feature-settings: "tnum" 1; }
 .song-header > .meta:last-of-type { margin-bottom: 1.5em; }
-.meta--attribution { font-family: "Inter", system-ui, sans-serif; font-size: 1rem; color: #4A4750; margin: 0.1em 0; }
+.meta--attribution { font-family: "Inter", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif; font-size: 1rem; color: #44424A; margin: 0.1em 0; }
 .meta--attribution-secondary { font-size: 0.8125rem; color: #67646D; margin-bottom: 0.8em; }
 .meta__label { color: #67646D; font-weight: 400; }
 .meta--params { display: flex; flex-wrap: wrap; gap: 0.4em; margin: 0.2em 0 0.8em; }
-.meta__chip { display: inline-block; padding: 0.15em 0.6em; border: 1px solid #D4D1D6; border-radius: 4px; background-color: #FAFAFA; color: #2A262E; font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 0.8125rem; font-weight: 500; line-height: 1.4; font-feature-settings: "tnum" 1; }
+.meta__chip { display: inline-block; padding: 0.15em 0.6em; border: 1px solid #D4D1D6; border-radius: 4px; background-color: #FAFAFA; color: #2A262E; font-family: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 0.8125rem; font-weight: 500; line-height: 1.4; font-feature-settings: "tnum" 1; }
 .meta--supplementary { font-size: 0.75rem; color: #67646D; margin-bottom: 0.4em; }
-.meta-inline { display: inline-flex; align-items: center; gap: 0.25rem; margin: 0.15em 0.3em 0.15em 0; padding: 0 0.5rem; box-sizing: border-box; min-height: 1.6rem; border-radius: 2px; background-color: #F6F4F7; border: 1px solid #E8E6EA; font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 0.75rem; color: #44424A; line-height: 1.2; letter-spacing: 0.02em; font-feature-settings: "tnum" 1; vertical-align: middle; }
+.meta-inline { display: inline-flex; align-items: center; gap: 0.25rem; margin: 0.15em 0.3em 0.15em 0; padding: 0 0.5rem; box-sizing: border-box; min-height: 1.6rem; border-radius: 2px; background-color: #F6F4F7; border: 1px solid #E8E6EA; font-family: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 0.75rem; color: #44424A; line-height: 1.2; letter-spacing: 0.02em; font-feature-settings: "tnum" 1; vertical-align: middle; }
 .meta-inline__label { color: #67646D; font-weight: 500; }
 .meta-inline__value { color: #0A0A0B; font-weight: 600; }
 .meta-inline__marking { color: #67646D; font-weight: 400; font-style: italic; }
@@ -23,7 +23,7 @@ h2 { font-family: "Noto Sans JP", system-ui, -apple-system, sans-serif; font-wei
 .meta-inline svg.music-glyph { height: 1.1em; width: auto; display: block; }
 .meta-inline span.music-glyph--time { font-size: 0.85em; }
 .music-glyph { display: inline-block; flex-shrink: 0; vertical-align: middle; color: #1A1718; }
-.music-glyph--time { display: inline-flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1; font-family: "Source Serif Pro", serif; font-weight: 700; font-size: 1.1em; letter-spacing: 0; }
+.music-glyph--time { display: inline-flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1; font-family: "Source Serif 4", Georgia, "Times New Roman", serif; font-weight: 700; font-size: 1.1em; letter-spacing: 0; }
 .music-glyph--time__num, .music-glyph--time__den { display: block; line-height: 0.9; font-feature-settings: "tnum" 1; }
 .music-glyph--time__bar { display: block; width: 0.9em; height: 1.5px; margin: 0.05em 0; background-color: currentColor; border-radius: 1px; flex-shrink: 0; }
 .music-glyph--metronome__pendulum { transform-origin: 9px 19px; animation: cs-metronome-swing var(--cs-metronome-period, 1s) cubic-bezier(0.55, 0, 0.45, 1) infinite alternate; }
@@ -37,8 +37,8 @@ h2 { font-family: "Noto Sans JP", system-ui, -apple-system, sans-serif; font-wei
 .lyrics { font-family: "Noto Sans JP", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif; font-weight: 400; font-size: 1.125rem; white-space: pre; }
 .empty-line { height: 1em; }
 section { margin: 1em 0; }
-section > .section-label, .chorus-recall > .section-label { font-family: "Inter", system-ui, -apple-system, sans-serif; font-weight: 600; font-size: 0.75rem; color: #67646D; margin: 0 0 0.5em; line-height: 1.4; }
-.comment { font-family: "Inter", system-ui, -apple-system, sans-serif; font-style: italic; color: #67646D; margin: 0.3em 0; }
+section > .section-label, .chorus-recall > .section-label { font-family: "Inter", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif; font-weight: 600; font-size: 0.75rem; color: #67646D; margin: 0 0 0.5em; line-height: 1.4; }
+.comment { font-family: "Inter", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif; font-style: italic; color: #67646D; margin: 0.3em 0; }
 .comment-box { border: 1px solid #D4D1D6; border-radius: 4px; padding: 0.2em 0.5em; display: block; width: fit-content; margin: 0.3em 0; }
 .comment.comment--highlight { background-color: #FFF3A3; color: #1A1718; font-style: normal; font-weight: 600; padding: 0.15em 0.4em; border-radius: 3px; display: block; width: fit-content; }
 .comment.comment--highlight mark { background: none; color: inherit; }

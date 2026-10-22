@@ -3,6 +3,7 @@ import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 
 import { IrealBarGrid, type IrealBarGridLoader } from './ireal-bar-grid';
 import { IrealPreview } from './ireal-preview';
 import type { IrealRenderLoader } from './use-ireal-render';
+import { SLUG } from './brand.generated';
 
 // Minimal `process.env.NODE_ENV` typing so we do not pull in
 // `@types/node` for a single dev-only reference. The exact
@@ -139,13 +140,13 @@ export function IrealProEditor({
     if (onChange !== undefined) onChange(url);
   };
 
-  const wrapperClass = ['chordsketch-ireal-pro-editor', className]
+  const wrapperClass = [`${SLUG}-ireal-pro-editor`, className]
     .filter((c): c is string => typeof c === 'string' && c.length > 0)
     .join(' ');
 
   return (
     <div className={wrapperClass} style={style}>
-      <div className="chordsketch-ireal-pro-editor__editor">
+      <div className={`${SLUG}-ireal-pro-editor__editor`}>
         <IrealBarGrid
           source={currentValue}
           // `<IrealBarGrid>` already derives its read-only behaviour
@@ -165,7 +166,7 @@ export function IrealProEditor({
         />
       </div>
       {hidePreview ? null : (
-        <div className="chordsketch-ireal-pro-editor__preview">
+        <div className={`${SLUG}-ireal-pro-editor__preview`}>
           <IrealPreview
             source={currentValue}
             errorFallback={errorFallback}

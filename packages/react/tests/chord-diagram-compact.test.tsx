@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 
 import { ChordDiagram } from '../src/chord-diagram';
 import { __resetStaleBundleWarnings } from '../src/use-chord-diagram';
+import { SLUG } from '../src/brand.generated';
 
 /**
  * `<ChordDiagram compact>` plumbing: a stub WASM loader records which
@@ -89,7 +90,7 @@ describe('<ChordDiagram compact>', () => {
       <ChordDiagram chord="Am" instrument="guitar" compact wasmLoader={compactCapableLoader(() => {})} />,
     );
     await waitFor(() =>
-      expect(container.querySelector('.chordsketch-diagram--compact')).not.toBeNull(),
+      expect(container.querySelector(`.${SLUG}-diagram--compact`)).not.toBeNull(),
     );
   });
 

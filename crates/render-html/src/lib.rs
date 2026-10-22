@@ -1088,10 +1088,39 @@ fn song_wraplines(song: &Song, config: &Config) -> bool {
 /// `flex-wrap: wrap` so that `.chord-diagrams-grid` (which intentionally
 /// keeps its own `flex-wrap: wrap`) is not affected.
 fn css_for_wraplines(wraplines: bool) -> String {
-    CSS_TEMPLATE.replace(
+    fill_tokens(CSS_TEMPLATE).replace(
         "__LINE_FLEX_WRAP__",
         if wraplines { "wrap" } else { "nowrap" },
     )
+}
+
+/// Replace every `@@token@@` placeholder in `template` with that design
+/// token's value from [`chordsketch_chordpro::brand::token`], so the stylesheet
+/// carries the brand from `brand/brand.json` instead of literal colours and
+/// fonts.
+///
+/// # Panics
+///
+/// Panics if a placeholder names a token the brand module does not define.
+/// The template is a compile-time constant, so this can only fire on a
+/// mistyped placeholder, which every test that renders CSS catches.
+fn fill_tokens(template: &str) -> String {
+    let mut out = String::with_capacity(template.len() + 1024);
+    let mut rest = template;
+    while let Some(start) = rest.find("@@") {
+        out.push_str(&rest[..start]);
+        let after = &rest[start + 2..];
+        let end = after
+            .find("@@")
+            .expect("CSS_TEMPLATE: unterminated @@token@@ placeholder");
+        let name = &after[..end];
+        let value = chordsketch_chordpro::brand::token(name)
+            .unwrap_or_else(|| panic!("CSS_TEMPLATE: unknown design token {name:?}"));
+        out.push_str(value);
+        rest = &after[end + 2..];
+    }
+    out.push_str(rest);
+    out
 }
 
 /// Parse a ChordPro source string and render it to HTML.
@@ -1156,31 +1185,33 @@ pub fn render(input: &str) -> String {
 // cannot inherit those tokens at consumer time — the rendered
 // HTML is meant to display correctly in browsers / readers
 // that haven't loaded any consumer stylesheet at all — so
-// every font / color / size is materialised as a literal
-// value here. When the design-system tokens change, BOTH
-// stylesheets need updating; the differences are
-// representational, not behavioural.
+// every font and colour is materialised as a literal value.
+// Those values are not written here: each `@@token@@`
+// placeholder is filled from `chordsketch_chordpro::brand`
+// (generated from `brand/brand.json` and
+// `design-system/tokens.css` by `scripts/build-brand.mjs`)
+// by `fill_tokens`, so both stylesheets follow one source.
 const CSS_TEMPLATE: &str = "\
-body { font-family: \"Noto Sans JP\", system-ui, -apple-system, \"Helvetica Neue\", Arial, sans-serif; font-size: 1rem; line-height: 1.6875; color: #0A0A0B; max-width: 720px; margin: 2em auto; padding: 0 1em; }
-h1 { font-family: \"Noto Sans JP\", system-ui, -apple-system, sans-serif; font-weight: 700; font-size: 1.875rem; letter-spacing: -0.02em; color: #0A0A0B; margin-bottom: 0.2em; }
-h2 { font-family: \"Noto Sans JP\", system-ui, -apple-system, sans-serif; font-weight: 400; font-size: 1rem; color: #67646D; margin-top: 0; }
-.meta { font-family: \"JetBrains Mono\", ui-monospace, \"SF Mono\", Menlo, Consolas, monospace; font-size: 0.8125rem; color: #67646D; margin: 0 0 0.4em; font-feature-settings: \"tnum\" 1; }
+body { font-family: @@font-jp@@; font-size: 1rem; line-height: 1.6875; color: @@ink-1000@@; max-width: 720px; margin: 2em auto; padding: 0 1em; }
+h1 { font-family: @@font-display@@; font-weight: 700; font-size: 1.875rem; letter-spacing: -0.02em; color: @@ink-1000@@; margin-bottom: 0.2em; }
+h2 { font-family: @@font-display@@; font-weight: 400; font-size: 1rem; color: @@ink-600@@; margin-top: 0; }
+.meta { font-family: @@font-mono@@; font-size: 0.8125rem; color: @@ink-600@@; margin: 0 0 0.4em; font-feature-settings: \"tnum\" 1; }
 .song-header > .meta:last-of-type { margin-bottom: 1.5em; }
-.meta--attribution { font-family: \"Inter\", system-ui, sans-serif; font-size: 1rem; color: #4A4750; margin: 0.1em 0; }
-.meta--attribution-secondary { font-size: 0.8125rem; color: #67646D; margin-bottom: 0.8em; }
-.meta__label { color: #67646D; font-weight: 400; }
+.meta--attribution { font-family: @@font-latin@@; font-size: 1rem; color: @@ink-700@@; margin: 0.1em 0; }
+.meta--attribution-secondary { font-size: 0.8125rem; color: @@ink-600@@; margin-bottom: 0.8em; }
+.meta__label { color: @@ink-600@@; font-weight: 400; }
 .meta--params { display: flex; flex-wrap: wrap; gap: 0.4em; margin: 0.2em 0 0.8em; }
-.meta__chip { display: inline-block; padding: 0.15em 0.6em; border: 1px solid #D4D1D6; border-radius: 4px; background-color: #FAFAFA; color: #2A262E; font-family: \"JetBrains Mono\", ui-monospace, monospace; font-size: 0.8125rem; font-weight: 500; line-height: 1.4; font-feature-settings: \"tnum\" 1; }
-.meta--supplementary { font-size: 0.75rem; color: #67646D; margin-bottom: 0.4em; }
-.meta-inline { display: inline-flex; align-items: center; gap: 0.25rem; margin: 0.15em 0.3em 0.15em 0; padding: 0 0.5rem; box-sizing: border-box; min-height: 1.6rem; border-radius: 2px; background-color: #F6F4F7; border: 1px solid #E8E6EA; font-family: \"JetBrains Mono\", ui-monospace, monospace; font-size: 0.75rem; color: #44424A; line-height: 1.2; letter-spacing: 0.02em; font-feature-settings: \"tnum\" 1; vertical-align: middle; }
-.meta-inline__label { color: #67646D; font-weight: 500; }
-.meta-inline__value { color: #0A0A0B; font-weight: 600; }
-.meta-inline__marking { color: #67646D; font-weight: 400; font-style: italic; }
-.meta-inline .music-glyph { display: inline-flex; align-items: center; flex-shrink: 0; color: #0A0A0B; height: 1.1em; }
+.meta__chip { display: inline-block; padding: 0.15em 0.6em; border: 1px solid @@ink-300@@; border-radius: 4px; background-color: @@surface-tint@@; color: @@ink-800@@; font-family: @@font-mono@@; font-size: 0.8125rem; font-weight: 500; line-height: 1.4; font-feature-settings: \"tnum\" 1; }
+.meta--supplementary { font-size: 0.75rem; color: @@ink-600@@; margin-bottom: 0.4em; }
+.meta-inline { display: inline-flex; align-items: center; gap: 0.25rem; margin: 0.15em 0.3em 0.15em 0; padding: 0 0.5rem; box-sizing: border-box; min-height: 1.6rem; border-radius: 2px; background-color: @@ink-100@@; border: 1px solid @@ink-200@@; font-family: @@font-mono@@; font-size: 0.75rem; color: @@ink-700@@; line-height: 1.2; letter-spacing: 0.02em; font-feature-settings: \"tnum\" 1; vertical-align: middle; }
+.meta-inline__label { color: @@ink-600@@; font-weight: 500; }
+.meta-inline__value { color: @@ink-1000@@; font-weight: 600; }
+.meta-inline__marking { color: @@ink-600@@; font-weight: 400; font-style: italic; }
+.meta-inline .music-glyph { display: inline-flex; align-items: center; flex-shrink: 0; color: @@ink-1000@@; height: 1.1em; }
 .meta-inline svg.music-glyph { height: 1.1em; width: auto; display: block; }
 .meta-inline span.music-glyph--time { font-size: 0.85em; }
-.music-glyph { display: inline-block; flex-shrink: 0; vertical-align: middle; color: #1A1718; }
-.music-glyph--time { display: inline-flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1; font-family: \"Source Serif Pro\", serif; font-weight: 700; font-size: 1.1em; letter-spacing: 0; }
+.music-glyph { display: inline-block; flex-shrink: 0; vertical-align: middle; color: @@ink-900@@; }
+.music-glyph--time { display: inline-flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1; font-family: @@font-chart-serif@@; font-weight: 700; font-size: 1.1em; letter-spacing: 0; }
 .music-glyph--time__num, .music-glyph--time__den { display: block; line-height: 0.9; font-feature-settings: \"tnum\" 1; }
 .music-glyph--time__bar { display: block; width: 0.9em; height: 1.5px; margin: 0.05em 0; background-color: currentColor; border-radius: 1px; flex-shrink: 0; }
 .music-glyph--metronome__pendulum { transform-origin: 9px 19px; animation: cs-metronome-swing var(--cs-metronome-period, 1s) cubic-bezier(0.55, 0, 0.45, 1) infinite alternate; }
@@ -1190,51 +1221,51 @@ h2 { font-family: \"Noto Sans JP\", system-ui, -apple-system, sans-serif; font-w
 @media (prefers-reduced-motion: reduce) { .music-glyph--metronome__pendulum { animation: none; transform: rotate(0deg); } .music-glyph--metronome__beat { animation: none; opacity: 1; } }
 .line { display: flex; flex-wrap: __LINE_FLEX_WRAP__; margin: 0.1em 0; }
 .chord-block { display: inline-flex; flex-direction: column; align-items: flex-start; }
-.chord { font-family: \"Roboto\", system-ui, -apple-system, \"Helvetica Neue\", Arial, sans-serif; font-weight: 700; color: #BD1642; font-size: 1rem; letter-spacing: 0.01em; line-height: 1; min-height: 1em; }
-.lyrics { font-family: \"Noto Sans JP\", system-ui, -apple-system, \"Helvetica Neue\", Arial, sans-serif; font-weight: 400; font-size: 1.125rem; white-space: pre; }
+.chord { font-family: @@font-chord@@; font-weight: 700; color: @@accent-500@@; font-size: 1rem; letter-spacing: 0.01em; line-height: 1; min-height: 1em; }
+.lyrics { font-family: @@font-jp@@; font-weight: 400; font-size: 1.125rem; white-space: pre; }
 .empty-line { height: 1em; }
 section { margin: 1em 0; }
-section > .section-label, .chorus-recall > .section-label { font-family: \"Inter\", system-ui, -apple-system, sans-serif; font-weight: 600; font-size: 0.75rem; color: #67646D; margin: 0 0 0.5em; line-height: 1.4; }
-.comment { font-family: \"Inter\", system-ui, -apple-system, sans-serif; font-style: italic; color: #67646D; margin: 0.3em 0; }
-.comment-box { border: 1px solid #D4D1D6; border-radius: 4px; padding: 0.2em 0.5em; display: block; width: fit-content; margin: 0.3em 0; }
-.comment.comment--highlight { background-color: #FFF3A3; color: #1A1718; font-style: normal; font-weight: 600; padding: 0.15em 0.4em; border-radius: 3px; display: block; width: fit-content; }
+section > .section-label, .chorus-recall > .section-label { font-family: @@font-latin@@; font-weight: 600; font-size: 0.75rem; color: @@ink-600@@; margin: 0 0 0.5em; line-height: 1.4; }
+.comment { font-family: @@font-latin@@; font-style: italic; color: @@ink-600@@; margin: 0.3em 0; }
+.comment-box { border: 1px solid @@ink-300@@; border-radius: 4px; padding: 0.2em 0.5em; display: block; width: fit-content; margin: 0.3em 0; }
+.comment.comment--highlight { background-color: @@highlight-bg@@; color: @@ink-900@@; font-style: normal; font-weight: 600; padding: 0.15em 0.4em; border-radius: 3px; display: block; width: fit-content; }
 .comment.comment--highlight mark { background: none; color: inherit; }
-section.tab .lyrics, section.grid .lyrics, section.abc .lyrics, section.ly .lyrics, section.textblock .lyrics { font-family: \"JetBrains Mono\", ui-monospace, \"SF Mono\", Menlo, Consolas, monospace; font-size: 0.875rem; font-feature-settings: \"tnum\" 1; }
+section.tab .lyrics, section.grid .lyrics, section.abc .lyrics, section.ly .lyrics, section.textblock .lyrics { font-family: @@font-mono@@; font-size: 0.875rem; font-feature-settings: \"tnum\" 1; }
 .chorus-recall { margin: 1em 0; }
 img { max-width: 100%; height: auto; }
 .chord-diagrams-grid { display: flex; flex-wrap: wrap; gap: 0.5em; margin: 0.5em 0; }
 .chord-diagram-container { display: inline-block; vertical-align: top; }
 .chord-diagram { display: block; }
-.grid-line { display: flex; align-items: stretch; margin: 0.35em 0; min-height: 2.4em; font-family: \"Roboto\", system-ui, -apple-system, \"Helvetica Neue\", Arial, sans-serif; font-weight: 600; font-size: 1rem; line-height: 1.4; color: #1A1718; }
+.grid-line { display: flex; align-items: stretch; margin: 0.35em 0; min-height: 2.4em; font-family: @@font-chord@@; font-weight: 600; font-size: 1rem; line-height: 1.4; color: @@ink-900@@; }
 .grid-bar { flex: 1 1 0; display: flex; align-items: center; padding: 0.2em 0.4em; min-width: 3em; }
 .grid-beat { flex: 1 1 0; display: flex; align-items: center; justify-content: flex-start; min-width: 0; }
-.grid-chord { color: #BD1642; }
-.grid-no-chord { color: #67646D; font-style: italic; font-weight: 500; }
+.grid-chord { color: @@accent-500@@; }
+.grid-no-chord { color: @@ink-600@@; font-style: italic; font-weight: 500; }
 .grid-barline { display: inline-flex; align-items: stretch; align-self: stretch; gap: 1.5px; flex-shrink: 0; }
-.grid-barline:not([class*='--']) { width: 1.5px; background-color: #1A1718; }
-.grid-barline__line { display: inline-block; width: 1.5px; background-color: #1A1718; }
+.grid-barline:not([class*='--']) { width: 1.5px; background-color: @@ink-900@@; }
+.grid-barline__line { display: inline-block; width: 1.5px; background-color: @@ink-900@@; }
 .grid-barline__line--thick { width: 3.5px; }
 .grid-barline__dots { display: inline-flex; flex-direction: column; justify-content: center; gap: 0.18em; padding: 0 2.5px; }
-.grid-barline__dots > span { width: 3px; height: 3px; border-radius: 50%; background-color: #1A1718; display: inline-block; }
+.grid-barline__dots > span { width: 3px; height: 3px; border-radius: 50%; background-color: @@ink-900@@; display: inline-block; }
 .grid-volta { position: relative; display: inline-flex; align-items: stretch; flex-shrink: 0; }
-.grid-volta .grid-barline__line { background-color: #1A1718; }
+.grid-volta .grid-barline__line { background-color: @@ink-900@@; }
 .grid-volta__bracket { position: absolute; top: -0.1em; left: 0; display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-start; }
-.grid-volta__cap { display: block; width: 1.5em; height: 1.5px; background-color: #1A1718; }
-.grid-volta__label { display: inline-block; margin-left: 0.15em; font-size: 0.7em; font-weight: 600; color: #1A1718; line-height: 1; padding-top: 0.1em; }
-.grid-row__label { display: inline-flex; align-items: center; flex-shrink: 0; padding-right: 0.6em; font-weight: 700; color: #44424A; text-transform: uppercase; font-size: 0.85em; letter-spacing: 0.04em; min-width: 2em; }
-.grid-row__comment { display: inline-flex; align-items: center; flex-shrink: 0; padding-left: 0.6em; font-style: italic; font-weight: 500; font-size: 0.85em; color: #67646D; }
-.grid-percent { font-weight: 700; font-size: 0.9em; color: #44424A; }
+.grid-volta__cap { display: block; width: 1.5em; height: 1.5px; background-color: @@ink-900@@; }
+.grid-volta__label { display: inline-block; margin-left: 0.15em; font-size: 0.7em; font-weight: 600; color: @@ink-900@@; line-height: 1; padding-top: 0.1em; }
+.grid-row__label { display: inline-flex; align-items: center; flex-shrink: 0; padding-right: 0.6em; font-weight: 700; color: @@ink-700@@; text-transform: uppercase; font-size: 0.85em; letter-spacing: 0.04em; min-width: 2em; }
+.grid-row__comment { display: inline-flex; align-items: center; flex-shrink: 0; padding-left: 0.6em; font-style: italic; font-weight: 500; font-size: 0.85em; color: @@ink-600@@; }
+.grid-percent { font-weight: 700; font-size: 0.9em; color: @@ink-700@@; }
 .grid-beat--percent1, .grid-beat--percent2 { justify-content: center; }
-.grid-chord__sep { display: inline-block; margin: 0 0.15em; color: #8A8790; font-weight: 400; font-size: 0.85em; }
+.grid-chord__sep { display: inline-block; margin: 0 0.15em; color: @@ink-500@@; font-weight: 400; font-size: 0.85em; }
 .grid-beat--multi { gap: 0; }
-.grid-line--strum { margin-top: -0.4em; min-height: 1.6em; font-size: 0.85em; color: #67646D; }
+.grid-line--strum { margin-top: -0.4em; min-height: 1.6em; font-size: 0.85em; color: @@ink-600@@; }
 .grid-strum { font-weight: 600; }
-.grid-strum__glyph { font-family: \"JetBrains Mono\", ui-monospace, \"SF Mono\", Menlo, Consolas, monospace; }
-.grid-strum--up { color: #BD1642; }
-.grid-strum--down { color: #1A1718; }
+.grid-strum__glyph { font-family: @@font-mono@@; }
+.grid-strum--up { color: @@accent-500@@; }
+.grid-strum--down { color: @@ink-900@@; }
 .grid-strum--up-accent, .grid-strum--down-accent { font-weight: 700; }
 .grid-strum--anticipated { font-style: italic; }
-.grid-strum--custom { color: #67646D; font-style: italic; }
+.grid-strum--custom { color: @@ink-600@@; font-style: italic; }
 .sr-only { position: absolute; clip: rect(0,0,0,0); width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; white-space: nowrap; border: 0; }
 ";
 

@@ -11,6 +11,7 @@ import { describe, expect, test, vi } from 'vitest';
 
 import { IrealBarGrid, type IrealBarGridLoader } from '../src/ireal-bar-grid';
 import type { IrealBar, IrealSong } from '../src/ireal-ast';
+import { SLUG } from '../src/brand.generated';
 
 interface EditorStub {
   default: ReturnType<typeof vi.fn>;
@@ -371,7 +372,7 @@ describe('<IrealBarGrid> popover — chord rows', () => {
     const dialog = await screen.findByRole('dialog');
     const bassInput = within(dialog).getByLabelText('/ Bass');
     fireEvent.change(bassInput, { target: { value: 'ZZZ' } });
-    expect(bassInput.classList.contains('chordsketch-ireal-bar-grid__input--invalid')).toBe(true);
+    expect(bassInput.classList.contains(`${SLUG}-ireal-bar-grid__input--invalid`)).toBe(true);
     fireEvent.click(screen.getByRole('button', { name: 'Save' }));
     await waitFor(() => expect(stub.serializeIrealb).toHaveBeenCalled());
     // AST bass unchanged from the seed value.

@@ -4,11 +4,14 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { ChordInspector } from './chord-inspector';
 import { ChordProPreview } from './chord-pro-preview';
 import { ChordSourceArea, type ChordSourceAreaHandle } from './chord-source-area';
+import { InsertToolbar } from './insert-toolbar';
 import type { PdfExportProps } from './pdf-export';
 import type { PreviewFormat } from './renderer-preview';
+import type { ChordDiagramOrientation } from './use-chord-diagram';
 import { SplitLayout } from './split-layout';
 import { useChordEditor } from './use-chord-editor';
 import type { ChordWasmLoader } from './use-chord-render';
+import { BRAND, SLUG } from './brand.generated';
 
 // Minimal `process.env.NODE_ENV` typing so we do not pull in
 // `@types/node` for a single dev-only reference. The exact
@@ -75,7 +78,7 @@ export interface ChordProEditorProps
    * would surface.
    */
   title?: string | null;
-  /** Filename used for the PDF download. Defaults to `"chordsketch-output.pdf"`. */
+  /** Filename used for the PDF download. Defaults to the brand's `pdfFilename` (`brand/brand.json`). */
   pdfFilename?: string;
   /**
    * The `PdfExport` component from `@chordsketch/react/pdf`, forwarded
@@ -99,6 +102,32 @@ export interface ChordProEditorProps
    */
   headerExtras?: ReactNode;
   /**
+   * Show the {@link InsertToolbar} above the source (Chord, + Directive,
+   * + Section, inserted at the caret). Defaults to `false`.
+   */
+  insertToolbar?: boolean;
+  /**
+   * Use the preview's performance toolbar ({@link PreviewToolbar}: Transpose
+   * ±6, Capo, chord-diagram orientation and a Chord audio toggle) in place of
+   * the Format select + Transpose header. Guitar chord diagrams show under
+   * the song, and with Chord audio on, clicking a chord or a diagram plays it.
+   * The preview stays in its current format (HTML by default). Defaults to
+   * `false`.
+   */
+  performanceToolbar?: boolean;
+  /**
+   * Preview formats offered, forwarded to {@link ChordProPreview}. Defaults to
+   * HTML, Text and PDF. A single format hides the Format select.
+   */
+  formats?: ReadonlyArray<PreviewFormat>;
+  /**
+   * Show a Split / Source / Preview toggle in the header, so the source and
+   * the preview can each be shown alone. Starts on Source on viewports
+   * narrower than 768px, where two panes do not fit side by side. Defaults to
+   * `false` (always split).
+   */
+  viewToggle?: boolean;
+  /**
    * Test-only WASM loader override. Production callers never need
    * to supply this.
    *
@@ -106,6 +135,17 @@ export interface ChordProEditorProps
    */
   wasmLoader?: ChordWasmLoader;
 }
+
+/** The panes {@link ChordProEditor}'s view toggle can show. */
+type EditorView = 'split' | 'source' | 'preview';
+const VIEWS: ReadonlyArray<{ value: EditorView; label: string }> = [
+  { value: 'split', label: 'Split' },
+  { value: 'source', label: 'Source' },
+  { value: 'preview', label: 'Preview' },
+];
+/** Viewport width (px) below which the view toggle starts on Source alone;
+ *  matches {@link SplitLayout}'s default stacking breakpoint. */
+const NARROW_PX = 768;
 
 /**
  * Tier 3 composed editor — opinionated all-in-one ChordPro editor +
@@ -138,14 +178,31 @@ export function ChordProEditor({
   defaultTranspose = 0,
   transpose: transposeProp,
   onTransposeChange,
-  title = 'ChordSketch',
+  title = BRAND.name,
   pdfFilename,
   pdfExportComponent,
   headerExtras,
+  insertToolbar = false,
+  performanceToolbar = false,
+  formats,
+  viewToggle = false,
   wasmLoader,
   className,
   ...divProps
 }: ChordProEditorProps): JSX.Element {
+  // Performance toolbar state: chord-diagram orientation and chord audio.
+  const [diagramsOrientation, setDiagramsOrientation] =
+    useState<ChordDiagramOrientation>('vertical');
+  const [chordAudioEnabled, setChordAudioEnabled] = useState(false);
+  // Which panes show: both, or one of them alone (viewToggle).
+  const [view, setView] = useState<EditorView>(() =>
+    viewToggle &&
+    typeof window !== 'undefined' &&
+    window.matchMedia?.(`(max-width: ${NARROW_PX - 1}px)`).matches
+      ? 'source'
+      : 'split',
+  );
+  const shownView: EditorView = viewToggle ? view : 'split';
   // Source — controlled vs uncontrolled.
   const [internalSource, setInternalSource] = useState(defaultSource);
   const isSourceControlled = sourceProp !== undefined;
@@ -181,6 +238,7 @@ export function ChordProEditor({
     onSourceChange: handleSourceChange,
     transpose,
     editorRef,
+    chordAudio: performanceToolbar && chordAudioEnabled,
   });
 
   // L4: dev-only controlled/uncontrolled flip warnings for source,
@@ -229,7 +287,7 @@ export function ChordProEditor({
     }
   }, [isTransposeControlled]);
 
-  const wrapperClass = ['chordsketch-chord-pro-editor', className]
+  const wrapperClass = [`${SLUG}-chord-pro-editor`, className]
     .filter(Boolean)
     .join(' ');
 
@@ -247,59 +305,106 @@ export function ChordProEditor({
   // the conditional is falsy.
   const hasHeaderExtras =
     headerExtras !== undefined && headerExtras !== null && headerExtras !== false;
-  const hasHeader = hasTitle || hasHeaderExtras;
+  const hasHeader = hasTitle || hasHeaderExtras || viewToggle;
+
+  const sourcePane = (
+    <div className={`${SLUG}-chord-pro-editor__source-pane`}>
+      {insertToolbar ? <InsertToolbar editorRef={editorRef} /> : null}
+      <ChordSourceArea
+        ref={editorRef}
+        value={source}
+        onChange={handleSourceChange}
+        onCaretChange={chordEditor.onCaretChange}
+        placeholder="Paste your ChordPro here…"
+      />
+    </div>
+  );
+  const previewPane = (
+    <ChordProPreview
+      className={`${SLUG}-chord-pro-editor__preview-pane`}
+      source={source}
+      format={formatProp}
+      defaultFormat={defaultFormat}
+      onFormatChange={onFormatChange}
+      formats={formats}
+      transpose={transpose}
+      onTransposeChange={handleTransposeChange}
+      pdfFilename={pdfFilename}
+      pdfExportComponent={pdfExportComponent}
+      chordSelection={chordEditor.chordSelection}
+      onChordSelectionChange={chordEditor.onChordSelectionChange}
+      onChordReposition={chordEditor.onChordReposition}
+      {...(performanceToolbar
+        ? {
+            toolbar: 'performance' as const,
+            onSourceChange: handleSourceChange,
+            transposeMin: -6,
+            transposeMax: 6,
+            chordDiagramsInstrument: 'guitar' as const,
+            chordDiagramsOrientation: diagramsOrientation,
+            onChordDiagramsOrientationChange: setDiagramsOrientation,
+            chordAudio: chordEditor.chordAudio,
+            chordAudioEnabled,
+            onChordAudioToggle: setChordAudioEnabled,
+          }
+        : {})}
+      wasmLoader={wasmLoader}
+    />
+  );
 
   return (
     <div {...divProps} className={wrapperClass}>
       {hasHeader ? (
-        <header className="chordsketch-chord-pro-editor__header">
+        <header className={`${SLUG}-chord-pro-editor__header`}>
           {hasTitle ? (
-            <h1 className="chordsketch-chord-pro-editor__title">
+            <h1 className={`${SLUG}-chord-pro-editor__title`}>
               <span
-                className="chordsketch-chord-pro-editor__brand-mark"
+                className={`${SLUG}-chord-pro-editor__brand-mark`}
                 aria-hidden="true"
               />
-              <span className="chordsketch-chord-pro-editor__brand-text">{title}</span>
+              <span className={`${SLUG}-chord-pro-editor__brand-text`}>{title}</span>
             </h1>
           ) : null}
-          {hasHeaderExtras ? (
-            <div className="chordsketch-chord-pro-editor__controls">{headerExtras}</div>
+          {viewToggle || hasHeaderExtras ? (
+            <div className={`${SLUG}-chord-pro-editor__controls`}>
+              {viewToggle ? (
+                <div
+                  className={`${SLUG}-chord-pro-editor__view-toggle`}
+                  role="group"
+                  aria-label="View"
+                >
+                  {VIEWS.map(({ value, label }) => (
+                    <button
+                      key={value}
+                      type="button"
+                      aria-pressed={shownView === value}
+                      onClick={() => setView(value)}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+              {hasHeaderExtras ? headerExtras : null}
+            </div>
           ) : null}
         </header>
       ) : null}
 
-      <SplitLayout
-        className="chordsketch-chord-pro-editor__split"
-        start={
-          <ChordSourceArea
-            ref={editorRef}
-            value={source}
-            onChange={handleSourceChange}
-            onCaretChange={chordEditor.onCaretChange}
-            placeholder="Paste your ChordPro here…"
-          />
-        }
-        end={
-          <ChordProPreview
-            className="chordsketch-chord-pro-editor__preview-pane"
-            source={source}
-            format={formatProp}
-            defaultFormat={defaultFormat}
-            onFormatChange={onFormatChange}
-            transpose={transpose}
-            onTransposeChange={handleTransposeChange}
-            pdfFilename={pdfFilename}
-            pdfExportComponent={pdfExportComponent}
-            chordSelection={chordEditor.chordSelection}
-            onChordSelectionChange={chordEditor.onChordSelectionChange}
-            onChordReposition={chordEditor.onChordReposition}
-            wasmLoader={wasmLoader}
-          />
-        }
-      />
+      {shownView === 'split' ? (
+        <SplitLayout
+          className={`${SLUG}-chord-pro-editor__split`}
+          start={sourcePane}
+          end={previewPane}
+        />
+      ) : (
+        <div className={`${SLUG}-chord-pro-editor__single`}>
+          {shownView === 'source' ? sourcePane : previewPane}
+        </div>
+      )}
 
       {/* Full-width chord-editor footer spanning both panes (#2644). */}
-      <div className="chordsketch-chord-pro-editor__chord-footer">
+      <div className={`${SLUG}-chord-pro-editor__chord-footer`}>
         <ChordInspector {...chordEditor.inspectorProps} />
       </div>
     </div>

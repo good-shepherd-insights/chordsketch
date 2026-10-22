@@ -27,6 +27,7 @@ import {
 
 import { chordProCompletionSource } from './chordpro-completion';
 import { chordProLanguage, chordProTagTable } from './chordpro-language';
+import { cssVar, SLUG } from './brand.generated';
 
 /** Imperative handle exposed via `ref` from {@link ChordSourceArea}. */
 export interface ChordSourceAreaHandle {
@@ -179,13 +180,13 @@ const designSystemHighlight = HighlightStyle.define([
   // Chord literals (`[G]`, `[Am7]`).
   {
     tag: chordProTagTable.atom,
-    color: 'var(--cs-crimson-500, #BD1642)',
+    color: cssVar('crimson-500'),
     fontWeight: '600',
   },
   // Directive names (`title`, `key`, `start_of_verse`).
   {
     tag: chordProTagTable.keyword,
-    color: 'var(--cs-text-secondary, #67646D)',
+    color: cssVar('text-secondary'),
   },
   // Directive values (text after the colon). Intentionally
   // unstyled — the reference treats values as plain copy.
@@ -195,14 +196,14 @@ const designSystemHighlight = HighlightStyle.define([
   // (ADR-0054).
   {
     tag: chordProTagTable.punctuation,
-    color: 'var(--cs-text-secondary, #67646D)',
+    color: cssVar('text-secondary'),
   },
   // ChordPro line comments (`# verse 1 …`). Same 14px / 4.5:1
   // reasoning as the punctuation above; the italic keeps them
   // distinct from the directive names now sharing the tone.
   {
     tag: chordProTagTable.comment,
-    color: 'var(--cs-text-secondary, #67646D)',
+    color: cssVar('text-secondary'),
     fontStyle: 'italic',
   },
 ]);
@@ -219,34 +220,34 @@ const designSystemTheme = EditorView.theme(
     '&': {
       height: '100%',
       fontSize: '0.875rem',
-      backgroundColor: 'var(--cs-surface, #FFFFFF)',
-      color: 'var(--cs-text-primary, #0A0A0B)',
+      backgroundColor: cssVar('surface'),
+      color: cssVar('text-primary'),
     },
     '.cm-scroller': {
       fontFamily:
-        '"JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace',
+        cssVar('font-mono'),
       lineHeight: '1.857',
     },
     '.cm-content': {
-      caretColor: 'var(--cs-crimson-500, #BD1642)',
+      caretColor: cssVar('crimson-500'),
       padding: '1.5rem 0',
     },
     '.cm-gutters': {
-      backgroundColor: 'var(--cs-surface, #FFFFFF)',
-      borderRight: '1px solid var(--cs-border, #E8E6EA)',
+      backgroundColor: cssVar('surface'),
+      borderRight: `1px solid ${cssVar('border')}`,
       // Line numbers are 13px text on `--cs-surface`, so they need the
       // 4.5:1 tone rather than the 3.53:1 tertiary one (ADR-0054).
-      color: 'var(--cs-text-secondary, #67646D)',
+      color: cssVar('text-secondary'),
       fontFamily:
-        '"JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace',
+        cssVar('font-mono'),
     },
     '.cm-lineNumbers .cm-gutterElement': {
       padding: '0 0.75rem 0 1rem',
       fontSize: '0.8125rem',
     },
     '.cm-activeLineGutter': {
-      backgroundColor: 'var(--cs-surface-hover, #F6F4F7)',
-      color: 'var(--cs-text-secondary, #67646D)',
+      backgroundColor: cssVar('surface-hover'),
+      color: cssVar('text-secondary'),
       fontWeight: '600',
     },
     '.cm-activeLine': {
@@ -255,33 +256,25 @@ const designSystemTheme = EditorView.theme(
       // line background. A solid `--cs-surface-hover` here
       // would hide the selection wash on the caret line. Use a
       // 4 % ink overlay instead so the active line still reads
-      // as a slight tint and the selection (`#F4B5C5`) shows
+      // as a slight tint and the selection (`--cs-accent-200`) shows
       // through clearly via alpha compositing.
-      backgroundColor: 'rgba(10, 10, 11, 0.04)',
+      backgroundColor: `color-mix(in srgb, ${cssVar('ink-1000')} 4%, transparent)`,
     },
     '.cm-cursor': {
       borderLeftWidth: '2px',
-      borderLeftColor: 'var(--cs-crimson-500, #BD1642)',
+      borderLeftColor: cssVar('crimson-500'),
     },
-    // Selection background: a solid mid-tone pink chosen so it
-    // is unambiguously distinct from BOTH the plain `--cs-surface`
-    // (#FFFFFF) and the `--cs-surface-hover` (#F6F4F7) active-line
-    // wash. The earlier attempts at this rule cycled through
-    // `--cs-crimson-100` (#FBE1E8 — too close to the active-line
-    // tint) and a `mix-blend-mode: multiply` overlay (works in
-    // theory; flaky in practice across browser stacking
-    // contexts), both of which left selections invisible on the
-    // caret line. The literal hex sits between `--cs-crimson-100`
-    // and `--cs-crimson-300` (#EC8AA3) — the design system does
-    // not ship a `--crimson-200` step, and adding one is out of
-    // scope here, so the colour is inlined with a comment
-    // tagging the intended token gap. If `--crimson-200` ever
-    // lands, swap to `var(--cs-crimson-200, #F4B5C5)`.
+    // Selection background: the accent's 200 step, a mid tone chosen so it
+    // is unambiguously distinct from BOTH the plain `--cs-surface` and the
+    // `--cs-surface-hover` active-line wash. `--cs-accent-100` sat too close
+    // to the active-line tint, and a `mix-blend-mode: multiply` overlay was
+    // flaky across browser stacking contexts; both left selections invisible
+    // on the caret line.
     '.cm-selectionBackground, ::selection': {
-      backgroundColor: '#F4B5C5 !important',
+      backgroundColor: `${cssVar('accent-200')} !important`,
     },
     '&.cm-focused .cm-selectionBackground': {
-      backgroundColor: '#F4B5C5 !important',
+      backgroundColor: `${cssVar('accent-200')} !important`,
     },
     // `bracketMatching()` ships a base theme whose selector is
     // `&.cm-focused .cm-matchingBracket` — three classes. A bare
@@ -291,8 +284,8 @@ const designSystemTheme = EditorView.theme(
     // its specificity is what makes this rule apply; the unfocused
     // selector stays so the tint survives a blur.
     '.cm-matchingBracket, &.cm-focused .cm-matchingBracket': {
-      backgroundColor: 'var(--cs-crimson-50, #FDF2F5)',
-      outline: '1px solid var(--cs-crimson-300, #EC8AA3)',
+      backgroundColor: cssVar('crimson-50'),
+      outline: `1px solid ${cssVar('crimson-300')}`,
     },
     '&.cm-focused': {
       // No focus outline / inset border. The CodeMirror caret
@@ -536,7 +529,7 @@ export const ChordSourceArea = forwardRef<ChordSourceAreaHandle, ChordSourceArea
       [],
     );
 
-    const wrapperClass = ['chordsketch-source-area', className]
+    const wrapperClass = [`${SLUG}-source-area`, className]
       .filter(Boolean)
       .join(' ');
 

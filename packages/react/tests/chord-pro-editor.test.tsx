@@ -4,6 +4,7 @@ import { beforeAll, describe, expect, test, vi } from 'vitest';
 import { ChordProEditor } from '../src/index';
 import { PDF_EXPORT_DEFAULT_LABEL, PdfExport } from '../src/pdf';
 import type { ChordWasmLoader } from '../src/use-chord-render';
+import { SLUG } from '../src/brand.generated';
 
 // `<SplitLayout>` (used by `<ChordProEditor>` to lay out source +
 // preview side-by-side) reads `window.matchMedia` to decide whether
@@ -126,7 +127,7 @@ describe('<ChordProEditor>', () => {
       />,
     );
     expect(
-      container.querySelector('.chordsketch-chord-pro-editor__controls'),
+      container.querySelector(`.${SLUG}-chord-pro-editor__controls`),
     ).toBeNull();
   });
 

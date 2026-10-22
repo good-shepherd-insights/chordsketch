@@ -6,6 +6,7 @@ import { describe, expect, test, vi } from 'vitest';
 
 import { IrealBarGrid, type IrealBarGridLoader } from '../src/ireal-bar-grid';
 import type { IrealSong } from '../src/ireal-ast';
+import { SLUG } from '../src/brand.generated';
 
 interface EditorStub {
   default: ReturnType<typeof vi.fn>;
@@ -66,7 +67,7 @@ async function renderEditor(barsCount: number) {
 
 function getCells(): HTMLButtonElement[] {
   return Array.from(
-    document.querySelectorAll<HTMLButtonElement>('.chordsketch-ireal-bar-grid__bar'),
+    document.querySelectorAll<HTMLButtonElement>(`.${SLUG}-ireal-bar-grid__bar`),
   );
 }
 
@@ -215,7 +216,7 @@ describe('<IrealBarGrid> keyboard — defense-in-depth dialog guard', () => {
     const dialog = document.createElement('div');
     dialog.setAttribute('role', 'dialog');
     container
-      .querySelector('.chordsketch-ireal-bar-grid')!
+      .querySelector(`.${SLUG}-ireal-bar-grid`)!
       .appendChild(dialog);
     cells[1]!.focus();
     fireEvent.keyDown(cells[1]!, { key: 'Delete' });
@@ -233,7 +234,7 @@ describe('<IrealBarGrid> keyboard — defense-in-depth dialog guard', () => {
     // shortcuts.
     const dialog = document.createElement('dialog');
     container
-      .querySelector('.chordsketch-ireal-bar-grid')!
+      .querySelector(`.${SLUG}-ireal-bar-grid`)!
       .appendChild(dialog);
     cells[1]!.focus();
     fireEvent.keyDown(cells[1]!, { key: 'Delete' });
@@ -246,7 +247,7 @@ describe('<IrealBarGrid> keyboard — defense-in-depth dialog guard', () => {
     const dialog = document.createElement('div');
     dialog.setAttribute('role', 'dialog');
     container
-      .querySelector('.chordsketch-ireal-bar-grid')!
+      .querySelector(`.${SLUG}-ireal-bar-grid`)!
       .appendChild(dialog);
     cells[0]!.focus();
     fireEvent.keyDown(cells[0]!, { key: 'ArrowRight', altKey: true });

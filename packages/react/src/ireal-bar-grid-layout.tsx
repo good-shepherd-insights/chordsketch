@@ -15,6 +15,7 @@ import {
   type IrealSection,
   type IrealSectionLabel,
 } from './ireal-ast';
+import { SLUG } from './brand.generated';
 
 /**
  * Number of bar cells per visual row. The CSS uses
@@ -93,7 +94,7 @@ export function IrealBarGridLayout({
   disabled,
 }: IrealBarGridLayoutProps): ReactElement {
   return (
-    <div className="chordsketch-ireal-bar-grid__sections">
+    <div className={`${SLUG}-ireal-bar-grid__sections`}>
       {sections.map((section, secIndex) => (
         <SectionBlock
           key={secIndex}
@@ -109,7 +110,7 @@ export function IrealBarGridLayout({
       ))}
       <button
         type="button"
-        className="chordsketch-ireal-bar-grid__add-section"
+        className={`${SLUG}-ireal-bar-grid__add-section`}
         onClick={() => ops.addSection()}
         disabled={disabled}
       >
@@ -155,14 +156,14 @@ function SectionBlock({
 
   return (
     <section
-      className="chordsketch-ireal-bar-grid__section"
+      className={`${SLUG}-ireal-bar-grid__section`}
       data-section-index={secIndex}
     >
-      <div className="chordsketch-ireal-bar-grid__section-header">
-        <h3 className="chordsketch-ireal-bar-grid__section-label">{sectionLabel}</h3>
+      <div className={`${SLUG}-ireal-bar-grid__section-header`}>
+        <h3 className={`${SLUG}-ireal-bar-grid__section-label`}>{sectionLabel}</h3>
         <button
           type="button"
-          className="chordsketch-ireal-bar-grid__section-action"
+          className={`${SLUG}-ireal-bar-grid__section-action`}
           aria-label="Rename section"
           onClick={() => ops.renameSection(secIndex, section.label)}
           disabled={disabled}
@@ -171,7 +172,7 @@ function SectionBlock({
         </button>
         <button
           type="button"
-          className="chordsketch-ireal-bar-grid__section-action"
+          className={`${SLUG}-ireal-bar-grid__section-action`}
           aria-label="Move section up"
           onClick={() => ops.moveSectionUp(secIndex)}
           disabled={disabled || secIndex === 0}
@@ -180,7 +181,7 @@ function SectionBlock({
         </button>
         <button
           type="button"
-          className="chordsketch-ireal-bar-grid__section-action"
+          className={`${SLUG}-ireal-bar-grid__section-action`}
           aria-label="Move section down"
           onClick={() => ops.moveSectionDown(secIndex)}
           disabled={disabled || secIndex === sectionsCount - 1}
@@ -189,7 +190,7 @@ function SectionBlock({
         </button>
         <button
           type="button"
-          className="chordsketch-ireal-bar-grid__section-action chordsketch-ireal-bar-grid__section-action--danger"
+          className={`${SLUG}-ireal-bar-grid__section-action ${SLUG}-ireal-bar-grid__section-action--danger`}
           aria-label="Delete section"
           onClick={() => ops.deleteSection(secIndex)}
           disabled={disabled}
@@ -199,7 +200,7 @@ function SectionBlock({
       </div>
 
       <div
-        className="chordsketch-ireal-bar-grid__bars"
+        className={`${SLUG}-ireal-bar-grid__bars`}
         role="grid"
         aria-rowcount={rowCount}
         aria-colcount={BARS_PER_ROW}
@@ -211,7 +212,7 @@ function SectionBlock({
           return (
             <div
               key={rowIdx}
-              className="chordsketch-ireal-bar-grid__row"
+              className={`${SLUG}-ireal-bar-grid__row`}
               role="row"
               aria-rowindex={rowIdx + 1}
             >
@@ -243,7 +244,7 @@ function SectionBlock({
 
       <button
         type="button"
-        className="chordsketch-ireal-bar-grid__add-bar"
+        className={`${SLUG}-ireal-bar-grid__add-bar`}
         onClick={() => ops.addBar(secIndex)}
         disabled={disabled}
       >
@@ -291,7 +292,7 @@ function BarCell({
 
   return (
     <div
-      className="chordsketch-ireal-bar-grid__bar-wrapper"
+      className={`${SLUG}-ireal-bar-grid__bar-wrapper`}
       data-bar-index={barIndex}
       role="gridcell"
       aria-colindex={colIndex + 1}
@@ -299,7 +300,7 @@ function BarCell({
       <button
         ref={cellRef}
         type="button"
-        className="chordsketch-ireal-bar-grid__bar"
+        className={`${SLUG}-ireal-bar-grid__bar`}
         // Include the rendered chord text in the accessible name
         // so screen-reader users hear which bar they are on, not
         // just its index. `text` is `' '` (U+00A0) for an empty
@@ -320,10 +321,10 @@ function BarCell({
       >
         {text}
       </button>
-      <div className="chordsketch-ireal-bar-grid__bar-actions">
+      <div className={`${SLUG}-ireal-bar-grid__bar-actions`}>
         <button
           type="button"
-          className="chordsketch-ireal-bar-grid__bar-action"
+          className={`${SLUG}-ireal-bar-grid__bar-action`}
           aria-label="Move bar left"
           onClick={() => ops.moveBarLeft(secIndex, barIndex)}
           disabled={disabled || barIndex === 0}
@@ -332,7 +333,7 @@ function BarCell({
         </button>
         <button
           type="button"
-          className="chordsketch-ireal-bar-grid__bar-action"
+          className={`${SLUG}-ireal-bar-grid__bar-action`}
           aria-label="Move bar right"
           onClick={() => ops.moveBarRight(secIndex, barIndex)}
           disabled={disabled || barIndex === barsCount - 1}
@@ -341,7 +342,7 @@ function BarCell({
         </button>
         <button
           type="button"
-          className="chordsketch-ireal-bar-grid__bar-action chordsketch-ireal-bar-grid__bar-action--danger"
+          className={`${SLUG}-ireal-bar-grid__bar-action ${SLUG}-ireal-bar-grid__bar-action--danger`}
           aria-label="Delete bar"
           onClick={() => ops.deleteBar(secIndex, barIndex)}
           disabled={disabled}
@@ -400,7 +401,7 @@ function handleBarCellKeydown(
   cellEl: HTMLButtonElement | null,
 ): void {
   if (cellEl !== null) {
-    const editorRoot = cellEl.closest('.chordsketch-ireal-bar-grid');
+    const editorRoot = cellEl.closest(`.${SLUG}-ireal-bar-grid`);
     if (editorRoot !== null && hasOpenPopover(editorRoot)) {
       return;
     }
@@ -438,7 +439,7 @@ function handleBarCellKeydown(
       // across the re-render. Sister-site comment: `render.ts:659-670`.
       const editorRoot =
         cellEl !== null
-          ? cellEl.closest<HTMLElement>('.chordsketch-ireal-bar-grid')
+          ? cellEl.closest<HTMLElement>(`.${SLUG}-ireal-bar-grid`)
           : null;
       ops.deleteBar(secIndex, barIndex);
       // After the structural op + React re-render, focus the
@@ -489,7 +490,7 @@ function handleBarCellKeydown(
  * `handleBarCellKeydown` for the three shapes recognised. */
 function hasOpenPopover(editorRoot: Element): boolean {
   return (
-    editorRoot.querySelector('.chordsketch-ireal-bar-grid__popover') !== null ||
+    editorRoot.querySelector(`.${SLUG}-ireal-bar-grid__popover`) !== null ||
     editorRoot.querySelector('[role="dialog"]') !== null ||
     editorRoot.querySelector('dialog') !== null
   );
@@ -501,13 +502,13 @@ function focusBarCell(
   barIndex: number,
 ): void {
   if (cellEl === null) return;
-  const editorRoot = cellEl.closest('.chordsketch-ireal-bar-grid');
+  const editorRoot = cellEl.closest(`.${SLUG}-ireal-bar-grid`);
   if (editorRoot === null) return;
   editorRoot
     .querySelector<HTMLButtonElement>(
-      `.chordsketch-ireal-bar-grid__section[data-section-index="${secIndex}"] ` +
-        `.chordsketch-ireal-bar-grid__bar-wrapper[data-bar-index="${barIndex}"] ` +
-        `.chordsketch-ireal-bar-grid__bar`,
+      `.${SLUG}-ireal-bar-grid__section[data-section-index="${secIndex}"] ` +
+        `.${SLUG}-ireal-bar-grid__bar-wrapper[data-bar-index="${barIndex}"] ` +
+        `.${SLUG}-ireal-bar-grid__bar`,
     )
     ?.focus();
 }
@@ -519,15 +520,15 @@ function focusAfterBarDelete(
 ): void {
   if (editorRoot === null) return;
   const sectionEl = editorRoot.querySelector(
-    `.chordsketch-ireal-bar-grid__section[data-section-index="${secIndex}"]`,
+    `.${SLUG}-ireal-bar-grid__section[data-section-index="${secIndex}"]`,
   );
   if (sectionEl === null) return;
   const cells = sectionEl.querySelectorAll<HTMLButtonElement>(
-    '.chordsketch-ireal-bar-grid__bar',
+    `.${SLUG}-ireal-bar-grid__bar`,
   );
   if (cells.length === 0) {
     sectionEl
-      .querySelector<HTMLButtonElement>('.chordsketch-ireal-bar-grid__add-bar')
+      .querySelector<HTMLButtonElement>(`.${SLUG}-ireal-bar-grid__add-bar`)
       ?.focus();
     return;
   }

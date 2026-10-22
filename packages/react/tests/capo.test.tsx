@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { describe, expect, test, vi } from 'vitest';
 
 import { Capo } from '../src/index';
+import { SLUG } from '../src/brand.generated';
 
 function getSelect(): HTMLSelectElement {
   return screen.getByRole('combobox', { name: 'Capo' }) as HTMLSelectElement;
@@ -104,7 +105,7 @@ describe('<Capo>', () => {
   test('flags no option when bestPositions is empty', () => {
     render(<Capo value={0} onChange={vi.fn()} bestPositions={[]} />);
     expect(bestCapoOptionValues()).toEqual([]);
-    expect(document.querySelector('.chordsketch-capo__sr-only')).toBeNull();
+    expect(document.querySelector(`.${SLUG}-capo__sr-only`)).toBeNull();
   });
 
   test('rejects NaN, Infinity, and non-integer entries from bestPositions', () => {
@@ -188,13 +189,13 @@ describe('<Capo>', () => {
   test('sr-only description is plural when multiple best positions are flagged', () => {
     render(<Capo value={0} onChange={vi.fn()} bestPositions={[3, 5]} />);
     expect(
-      document.querySelector('.chordsketch-capo__sr-only')?.textContent,
+      document.querySelector(`.${SLUG}-capo__sr-only`)?.textContent,
     ).toContain('positions');
   });
 
   test('sr-only description is singular when exactly one best position is flagged', () => {
     render(<Capo value={0} onChange={vi.fn()} bestPositions={[5]} />);
-    const text = document.querySelector('.chordsketch-capo__sr-only')?.textContent ?? '';
+    const text = document.querySelector(`.${SLUG}-capo__sr-only`)?.textContent ?? '';
     expect(text).toContain('position');
     expect(text).not.toContain('positions');
   });

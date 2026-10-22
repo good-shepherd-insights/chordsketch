@@ -1,6 +1,7 @@
 import { useMemo, type CSSProperties, type ReactNode } from 'react';
 
 import { useIrealRender, type IrealRenderLoader } from './use-ireal-render';
+import { SLUG } from './brand.generated';
 
 export interface IrealPreviewProps {
   /** `irealb://` URL to render. */
@@ -67,7 +68,7 @@ export function IrealPreview({
     if (errorFallback === null) return null;
     if (errorFallback === undefined) {
       return (
-        <p className="chordsketch-ireal-preview__error" role="alert">
+        <p className={`${SLUG}-ireal-preview__error`} role="alert">
           {error.message}
         </p>
       );
@@ -75,7 +76,7 @@ export function IrealPreview({
     return errorFallback(error);
   }, [error, errorFallback]);
 
-  const wrapperClass = ['chordsketch-ireal-preview', className]
+  const wrapperClass = [`${SLUG}-ireal-preview`, className]
     .filter((c): c is string => typeof c === 'string' && c.length > 0)
     .join(' ');
 
@@ -89,7 +90,7 @@ export function IrealPreview({
       {errorNode}
       {svg === null ? null : (
         <div
-          className="chordsketch-ireal-preview__svg"
+          className={`${SLUG}-ireal-preview__svg`}
           // The SVG is produced by the trusted Rust renderer; no host
           // input flows into the markup beyond the structured chord /
           // metadata fields the renderer already escapes.

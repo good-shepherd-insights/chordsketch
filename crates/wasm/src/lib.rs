@@ -2722,9 +2722,10 @@ mod wasm_tests {
         );
         for i in 0..captured.length() {
             let entry = captured.get(i).as_string().unwrap_or_default();
+            let prefix = format!("{}:", chordsketch_chordpro::brand::CONSOLE_PREFIX);
             assert!(
-                entry.starts_with("chordsketch:"),
-                "console.warn entry should start with 'chordsketch:', got: {entry}"
+                entry.starts_with(&prefix),
+                "console.warn entry should start with '{prefix}', got: {entry}"
             );
         }
     }

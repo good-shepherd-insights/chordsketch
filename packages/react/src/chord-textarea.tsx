@@ -5,6 +5,7 @@ import { ChordSheet } from './chord-sheet';
 import type { ChordRenderFormat, ChordWasmLoader } from './use-chord-render';
 import type { ChordproWasmLoader } from './use-chordpro-ast';
 import { useDebounced } from './use-debounced';
+import { SLUG } from './brand.generated';
 
 // Minimal `process.env.NODE_ENV` typing so we do not pull in
 // `@types/node` for a single dev-only reference. The exact
@@ -238,12 +239,12 @@ export function ChordTextarea({
     [clampedTranspose, effectiveTransposeMax, effectiveTransposeMin, onTransposeChange],
   );
 
-  const wrapperClass = ['chordsketch-textarea', className].filter(Boolean).join(' ');
+  const wrapperClass = [`${SLUG}-textarea`, className].filter(Boolean).join(' ');
 
   return (
     <div {...divProps} className={wrapperClass}>
       <textarea
-        className="chordsketch-textarea__textarea"
+        className={`${SLUG}-textarea__textarea`}
         value={current}
         onChange={handleChange}
         onKeyDown={handleKeyDown}
@@ -261,7 +262,7 @@ export function ChordTextarea({
         autoCapitalize="off"
         autoComplete="off"
       />
-      <div className="chordsketch-textarea__preview">
+      <div className={`${SLUG}-textarea__preview`}>
         <ChordSheet
           source={debounced}
           transpose={clampedTranspose}

@@ -41,6 +41,7 @@ import {
   type ChordParts,
 } from './chord-source-edit';
 import type { ChordStaffWasmLoader } from './use-chord-staff';
+import { SLUG } from './brand.generated';
 
 /** Root letters offered in the segmented control, C-major order. */
 const ROOT_NOTES = ['C', 'D', 'E', 'F', 'G', 'A', 'B'] as const;
@@ -183,16 +184,16 @@ export function ChordInspector(props: ChordInspectorProps): JSX.Element {
   if (!selected) {
     return (
       <div
-        className="chordsketch-sheet__cins chordsketch-sheet__cins--idle"
+        className={`${SLUG}-sheet__cins ${SLUG}-sheet__cins--idle`}
         role="group"
         aria-label="Chord editor"
         data-mode="idle"
         onKeyDown={onKeyDown}
       >
-        <div className="chordsketch-sheet__cins-head">
+        <div className={`${SLUG}-sheet__cins-head`}>
           <div>
-            <div className="chordsketch-sheet__cins-eyebrow">No chord selected</div>
-            <div className="chordsketch-sheet__cins-idle-hint">
+            <div className={`${SLUG}-sheet__cins-eyebrow`}>No chord selected</div>
+            <div className={`${SLUG}-sheet__cins-idle-hint`}>
               {props.note ??
                 'Click a chord in the preview, or move the caret onto one in the editor, to edit it.'}
             </div>
@@ -204,16 +205,16 @@ export function ChordInspector(props: ChordInspectorProps): JSX.Element {
 
   return (
     <div
-      className="chordsketch-sheet__cins"
+      className={`${SLUG}-sheet__cins`}
       role="group"
       aria-label={`Edit chord ${titleName || '(empty)'}`}
       data-mode="edit"
       onKeyDown={onKeyDown}
     >
-      <div className="chordsketch-sheet__cins-head">
-        <div className="chordsketch-sheet__cins-title">
-          <div className="chordsketch-sheet__cins-eyebrow">Editing chord</div>
-          <div className="chordsketch-sheet__cins-name">{titleName || '—'}</div>
+      <div className={`${SLUG}-sheet__cins-head`}>
+        <div className={`${SLUG}-sheet__cins-title`}>
+          <div className={`${SLUG}-sheet__cins-eyebrow`}>Editing chord</div>
+          <div className={`${SLUG}-sheet__cins-name`}>{titleName || '—'}</div>
           {/* Constituent notes of the chord on a five-line staff, beneath
               the name. Empty `chordName` (a rootless / unparseable token)
               still renders the placeholder rather than a broken staff. */}
@@ -223,14 +224,14 @@ export function ChordInspector(props: ChordInspectorProps): JSX.Element {
               displayName={titleName || undefined}
               musicKey={props.musicKey}
               wasmLoader={props.staffLoader}
-              className="chordsketch-sheet__cins-staff"
+              className={`${SLUG}-sheet__cins-staff`}
             />
           ) : null}
         </div>
         {props.onClose ? (
           <button
             type="button"
-            className="chordsketch-sheet__cins-close"
+            className={`${SLUG}-sheet__cins-close`}
             aria-label="Close chord editor"
             onClick={props.onClose}
           >
@@ -239,10 +240,10 @@ export function ChordInspector(props: ChordInspectorProps): JSX.Element {
         ) : null}
       </div>
 
-      <div className="chordsketch-sheet__cins-group">
-        <span className="chordsketch-sheet__cins-label">Root</span>
+      <div className={`${SLUG}-sheet__cins-group`}>
+        <span className={`${SLUG}-sheet__cins-label`}>Root</span>
         <div
-          className="chordsketch-sheet__cins-seg"
+          className={`${SLUG}-sheet__cins-seg`}
           role="group"
           aria-label="Root note"
         >
@@ -258,7 +259,7 @@ export function ChordInspector(props: ChordInspectorProps): JSX.Element {
           ))}
         </div>
         <div
-          className="chordsketch-sheet__cins-seg"
+          className={`${SLUG}-sheet__cins-seg`}
           role="group"
           aria-label="Accidental"
         >
@@ -282,10 +283,10 @@ export function ChordInspector(props: ChordInspectorProps): JSX.Element {
           A bass the picker cannot model (a non-plain-note token) leaves every
           chip unpressed and is edited through the free-form `/ Bass` field
           below; the two stay in sync because both write `ChordParts.bass`. */}
-      <div className="chordsketch-sheet__cins-group">
-        <span className="chordsketch-sheet__cins-label">Bass</span>
+      <div className={`${SLUG}-sheet__cins-group`}>
+        <span className={`${SLUG}-sheet__cins-label`}>Bass</span>
         <div
-          className="chordsketch-sheet__cins-seg"
+          className={`${SLUG}-sheet__cins-seg`}
           role="group"
           aria-label="Bass note"
         >
@@ -310,7 +311,7 @@ export function ChordInspector(props: ChordInspectorProps): JSX.Element {
           ))}
         </div>
         <div
-          className="chordsketch-sheet__cins-seg"
+          className={`${SLUG}-sheet__cins-seg`}
           role="group"
           aria-label="Bass accidental"
         >
@@ -337,10 +338,10 @@ export function ChordInspector(props: ChordInspectorProps): JSX.Element {
           ambiguous `13`). The current suffix is decomposed to light up the
           controls; an unrecognised (free-form) suffix leaves them all
           unpressed and is edited through the Quality / ext. field below. */}
-      <div className="chordsketch-sheet__cins-group chordsketch-sheet__cins-group--type">
-        <span className="chordsketch-sheet__cins-label">Triad</span>
+      <div className={`${SLUG}-sheet__cins-group ${SLUG}-sheet__cins-group--type`}>
+        <span className={`${SLUG}-sheet__cins-label`}>Triad</span>
         <div
-          className="chordsketch-sheet__cins-chips"
+          className={`${SLUG}-sheet__cins-chips`}
           role="group"
           aria-label="Triad quality"
         >
@@ -348,7 +349,7 @@ export function ChordInspector(props: ChordInspectorProps): JSX.Element {
             <button
               key={opt.value}
               type="button"
-              className="chordsketch-sheet__cins-chip"
+              className={`${SLUG}-sheet__cins-chip`}
               aria-pressed={recognized && selection.triad === opt.value}
               onClick={() => emit({ suffix: composeChordSuffix(withTriad(selection, opt.value)) })}
             >
@@ -358,10 +359,10 @@ export function ChordInspector(props: ChordInspectorProps): JSX.Element {
         </div>
       </div>
 
-      <div className="chordsketch-sheet__cins-group chordsketch-sheet__cins-group--type">
-        <span className="chordsketch-sheet__cins-label">7th</span>
+      <div className={`${SLUG}-sheet__cins-group ${SLUG}-sheet__cins-group--type`}>
+        <span className={`${SLUG}-sheet__cins-label`}>7th</span>
         <div
-          className="chordsketch-sheet__cins-chips"
+          className={`${SLUG}-sheet__cins-chips`}
           role="group"
           aria-label="Seventh"
         >
@@ -371,7 +372,7 @@ export function ChordInspector(props: ChordInspectorProps): JSX.Element {
               <button
                 key={opt.value}
                 type="button"
-                className="chordsketch-sheet__cins-chip"
+                className={`${SLUG}-sheet__cins-chip`}
                 disabled={unavailable}
                 // Explain why the chip is inert so the disabled style is not a
                 // dead end (a greyed control with no stated cause).
@@ -386,10 +387,10 @@ export function ChordInspector(props: ChordInspectorProps): JSX.Element {
         </div>
       </div>
 
-      <div className="chordsketch-sheet__cins-group chordsketch-sheet__cins-group--type">
-        <span className="chordsketch-sheet__cins-label">Tensions</span>
+      <div className={`${SLUG}-sheet__cins-group ${SLUG}-sheet__cins-group--type`}>
+        <span className={`${SLUG}-sheet__cins-label`}>Tensions</span>
         <div
-          className="chordsketch-sheet__cins-chips"
+          className={`${SLUG}-sheet__cins-chips`}
           role="group"
           aria-label="Tensions"
         >
@@ -399,7 +400,7 @@ export function ChordInspector(props: ChordInspectorProps): JSX.Element {
               <button
                 key={opt.value}
                 type="button"
-                className="chordsketch-sheet__cins-chip"
+                className={`${SLUG}-sheet__cins-chip`}
                 disabled={unavailable}
                 // Explain why the chip is inert so the disabled style is not a
                 // dead end (a greyed control with no stated cause).
@@ -416,11 +417,11 @@ export function ChordInspector(props: ChordInspectorProps): JSX.Element {
         </div>
       </div>
 
-      <div className="chordsketch-sheet__cins-row2">
-        <label className="chordsketch-sheet__cins-field">
-          <span className="chordsketch-sheet__cins-label">Quality / ext.</span>
+      <div className={`${SLUG}-sheet__cins-row2`}>
+        <label className={`${SLUG}-sheet__cins-field`}>
+          <span className={`${SLUG}-sheet__cins-label`}>Quality / ext.</span>
           <input
-            className="chordsketch-sheet__cins-input"
+            className={`${SLUG}-sheet__cins-input`}
             value={suffix}
             placeholder="m7, sus4…"
             spellCheck={false}
@@ -429,10 +430,10 @@ export function ChordInspector(props: ChordInspectorProps): JSX.Element {
             onChange={(e) => emit({ suffix: e.target.value })}
           />
         </label>
-        <label className="chordsketch-sheet__cins-field">
-          <span className="chordsketch-sheet__cins-label">/ Bass</span>
+        <label className={`${SLUG}-sheet__cins-field`}>
+          <span className={`${SLUG}-sheet__cins-label`}>/ Bass</span>
           <input
-            className="chordsketch-sheet__cins-input"
+            className={`${SLUG}-sheet__cins-input`}
             value={bass}
             placeholder="G, F#…"
             spellCheck={false}
@@ -443,24 +444,24 @@ export function ChordInspector(props: ChordInspectorProps): JSX.Element {
         </label>
       </div>
 
-      <div className="chordsketch-sheet__cins-divider" />
+      <div className={`${SLUG}-sheet__cins-divider`} />
 
-      <div className="chordsketch-sheet__cins-group">
-        <span className="chordsketch-sheet__cins-label">Move chord</span>
-        <div className="chordsketch-sheet__cins-move">
+      <div className={`${SLUG}-sheet__cins-group`}>
+        <span className={`${SLUG}-sheet__cins-label`}>Move chord</span>
+        <div className={`${SLUG}-sheet__cins-move`}>
           <button
             type="button"
-            className="chordsketch-sheet__cins-movebtn"
+            className={`${SLUG}-sheet__cins-movebtn`}
             aria-label="Move chord left"
             disabled={!canLeft}
             onClick={() => props.onNudge(-1)}
           >
             ◀
           </button>
-          <span className="chordsketch-sheet__cins-movelbl">one step</span>
+          <span className={`${SLUG}-sheet__cins-movelbl`}>one step</span>
           <button
             type="button"
-            className="chordsketch-sheet__cins-movebtn"
+            className={`${SLUG}-sheet__cins-movebtn`}
             aria-label="Move chord right"
             disabled={!canRight}
             onClick={() => props.onNudge(1)}
@@ -470,11 +471,11 @@ export function ChordInspector(props: ChordInspectorProps): JSX.Element {
         </div>
       </div>
 
-      <div className="chordsketch-sheet__cins-footer">
+      <div className={`${SLUG}-sheet__cins-footer`}>
         {props.onRemove ? (
           <button
             type="button"
-            className="chordsketch-sheet__cins-remove"
+            className={`${SLUG}-sheet__cins-remove`}
             onClick={props.onRemove}
           >
             Remove chord

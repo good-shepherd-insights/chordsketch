@@ -13,6 +13,7 @@ import { CAPO_MAX, CAPO_MIN } from './chord-source-edit';
 import type {
   ChordDiagramOrientation,
 } from './use-chord-diagram';
+import { BRAND, SLUG } from './brand.generated';
 
 /** Props accepted by {@link PreviewToolbar}. */
 export interface PreviewToolbarProps
@@ -105,7 +106,7 @@ export interface PreviewToolbarProps
    * `onChordAudioToggle` is provided, `false` otherwise.
    */
   showChordAudio?: boolean;
-  /** Filename for the PDF download. Defaults to `chordsketch-output.pdf`. */
+  /** Filename for the PDF download. Defaults to the brand's `pdfFilename` (`brand/brand.json`). */
   exportFilename?: string;
   /**
    * Test-only WASM loader override for the Export group's
@@ -228,7 +229,7 @@ export function PreviewToolbar({
   showCapo,
   showExport = true,
   pdfExportComponent: PdfExportComponent,
-  exportFilename = 'chordsketch-output.pdf',
+  exportFilename = BRAND.pdfFilename,
   wasmLoader,
   chordDiagramsOrientation,
   onChordDiagramsOrientationChange,
@@ -249,7 +250,7 @@ export function PreviewToolbar({
   const effectiveOrientation: ChordDiagramOrientation =
     chordDiagramsOrientation ?? 'vertical';
   const wrapperClass = [
-    'chordsketch-preview-toolbar',
+    `${SLUG}-preview-toolbar`,
     'pane-toolbar',
     className,
   ]
@@ -269,7 +270,7 @@ export function PreviewToolbar({
     >
       {showTranspose ? (
         <Transpose
-          className="chordsketch-preview-toolbar__group tool-group chordsketch-preview-toolbar__group--transpose"
+          className={`${SLUG}-preview-toolbar__group tool-group ${SLUG}-preview-toolbar__group--transpose`}
           value={transpose}
           onChange={onTransposeChange}
           min={transposeMin}
@@ -279,7 +280,7 @@ export function PreviewToolbar({
       ) : null}
       {capoEnabled ? (
         <Capo
-          className="chordsketch-preview-toolbar__group tool-group chordsketch-preview-toolbar__group--capo"
+          className={`${SLUG}-preview-toolbar__group tool-group ${SLUG}-preview-toolbar__group--capo`}
           source={source}
           onSourceChange={onSourceChange!}
           min={capoMin}
@@ -294,21 +295,21 @@ export function PreviewToolbar({
       ) : null}
       {diagramsEnabled ? (
         <div
-          className="chordsketch-preview-toolbar__group tool-group chordsketch-preview-toolbar__group--diagrams"
+          className={`${SLUG}-preview-toolbar__group tool-group ${SLUG}-preview-toolbar__group--diagrams`}
           role="group"
           aria-label="Chord diagrams"
         >
           <span
-            className="chordsketch-preview-toolbar__label label"
-            id="chordsketch-preview-toolbar-diagrams-orientation-label"
+            className={`${SLUG}-preview-toolbar__label label`}
+            id={`${SLUG}-preview-toolbar-diagrams-orientation-label`}
             aria-hidden="true"
           >
             Diagrams
           </span>
           <select
-            className="chordsketch-preview-toolbar__diagrams-orientation"
+            className={`${SLUG}-preview-toolbar__diagrams-orientation`}
             value={effectiveOrientation}
-            aria-labelledby="chordsketch-preview-toolbar-diagrams-orientation-label"
+            aria-labelledby={`${SLUG}-preview-toolbar-diagrams-orientation-label`}
             onChange={(e) =>
               onChordDiagramsOrientationChange!(
                 e.target.value as ChordDiagramOrientation,
@@ -322,12 +323,12 @@ export function PreviewToolbar({
       ) : null}
       {audioEnabled ? (
         <div
-          className="chordsketch-preview-toolbar__group tool-group chordsketch-preview-toolbar__group--audio"
+          className={`${SLUG}-preview-toolbar__group tool-group ${SLUG}-preview-toolbar__group--audio`}
           role="group"
           aria-label="Chord audio"
         >
           <span
-            className="chordsketch-preview-toolbar__label label"
+            className={`${SLUG}-preview-toolbar__label label`}
             aria-hidden="true"
           >
             Audio
@@ -342,7 +343,7 @@ export function PreviewToolbar({
                `.chordsketch-preview-toolbar__audio-toggle` rule owns the
                full styling so the on/off state is correct with or without
                react-ui present (#2669). */
-            className="chordsketch-preview-toolbar__audio-toggle"
+            className={`${SLUG}-preview-toolbar__audio-toggle`}
             aria-pressed={Boolean(chordAudioEnabled)}
             /* No `aria-label`: the visible "Chord audio" text is the
                control's name, and an override that did not contain it
@@ -362,12 +363,12 @@ export function PreviewToolbar({
       ) : null}
       {showExport && PdfExportComponent ? (
         <div
-          className="chordsketch-preview-toolbar__group tool-group chordsketch-preview-toolbar__group--export"
+          className={`${SLUG}-preview-toolbar__group tool-group ${SLUG}-preview-toolbar__group--export`}
           role="group"
           aria-label="Export"
         >
           <span
-            className="chordsketch-preview-toolbar__label label"
+            className={`${SLUG}-preview-toolbar__label label`}
             aria-hidden="true"
           >
             Export
@@ -377,7 +378,7 @@ export function PreviewToolbar({
             options={{ transpose }}
             filename={exportFilename}
             wasmLoader={wasmLoader}
-            className="chordsketch-preview-toolbar__export btn btn-secondary btn-sm"
+            className={`${SLUG}-preview-toolbar__export btn btn-secondary btn-sm`}
           >
             {EXPORT_ICON}
             {PDF_EXPORT_DEFAULT_LABEL}
@@ -386,7 +387,7 @@ export function PreviewToolbar({
       ) : null}
       {trailing ? (
         <div
-          className="chordsketch-preview-toolbar__group tool-group chordsketch-preview-toolbar__group--trailing"
+          className={`${SLUG}-preview-toolbar__group tool-group ${SLUG}-preview-toolbar__group--trailing`}
           role="group"
           aria-label="Additional actions"
         >

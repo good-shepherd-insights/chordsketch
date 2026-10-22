@@ -8,6 +8,7 @@ import { describe, expect, test, vi } from 'vitest';
 
 import { IrealBarGrid, type IrealBarGridLoader } from '../src/ireal-bar-grid';
 import type { IrealSong } from '../src/ireal-ast';
+import { SLUG } from '../src/brand.generated';
 
 interface EditorStub {
   default: ReturnType<typeof vi.fn>;
@@ -116,7 +117,7 @@ describe('<IrealBarGrid> bar grid — roving tabindex', () => {
     await waitFor(() => {
       const cells = screen
         .getAllByRole('button', { name: /^Edit bar / })
-        .filter((b) => b.classList.contains('chordsketch-ireal-bar-grid__bar'));
+        .filter((b) => b.classList.contains(`${SLUG}-ireal-bar-grid__bar`));
       const tabZero = cells.filter((c) => c.getAttribute('tabindex') === '0');
       expect(tabZero.length).toBe(1);
       // Per the reconciler default, the first bar of the first
@@ -129,7 +130,7 @@ describe('<IrealBarGrid> bar grid — roving tabindex', () => {
     await renderEditor(songWithBars(4));
     const cells = screen
       .getAllByRole('button', { name: /^Edit bar / })
-      .filter((b) => b.classList.contains('chordsketch-ireal-bar-grid__bar'));
+      .filter((b) => b.classList.contains(`${SLUG}-ireal-bar-grid__bar`));
     // Focus the third cell. After commit the slot should have moved.
     cells[2]!.focus();
     await waitFor(() => {
@@ -142,7 +143,7 @@ describe('<IrealBarGrid> bar grid — roving tabindex', () => {
   test('section with zero bars contributes no Tab stops', async () => {
     const song = songWithBars(0);
     await renderEditor(song);
-    const cells = document.querySelectorAll('.chordsketch-ireal-bar-grid__bar');
+    const cells = document.querySelectorAll(`.${SLUG}-ireal-bar-grid__bar`);
     expect(cells.length).toBe(0);
   });
 });
@@ -157,7 +158,7 @@ describe('<IrealBarGrid> bar grid — focus activation', () => {
     await renderEditor(songWithBars(4));
     const cells = screen
       .getAllByRole('button', { name: /^Edit bar / })
-      .filter((b) => b.classList.contains('chordsketch-ireal-bar-grid__bar'));
+      .filter((b) => b.classList.contains(`${SLUG}-ireal-bar-grid__bar`));
     cells[3]!.focus();
     await waitFor(() => {
       expect(cells[3]!.getAttribute('tabindex')).toBe('0');

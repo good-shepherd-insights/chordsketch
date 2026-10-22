@@ -480,7 +480,7 @@ impl Config {
         let mut warnings = Vec::new();
 
         // System config (trusted — full size limit)
-        let system_path = PathBuf::from("/etc/chordsketch.json");
+        let system_path = PathBuf::from(format!("/etc/{}.json", crate::brand::SLUG));
         if let Some(text) = read_file_if_exists(&system_path, MAX_CONFIG_FILE_SIZE, &mut warnings) {
             match Self::parse_collecting_warnings(&text, &mut warnings) {
                 Ok(sys) => config = config.merge(sys),
@@ -494,7 +494,9 @@ impl Config {
         // User config (trusted — full size limit): respect XDG_CONFIG_HOME,
         // fall back to $HOME/.config.
         if let Some(config_dir) = config_dir() {
-            let user_path = config_dir.join("chordsketch").join("chordsketch.json");
+            let user_path = config_dir
+                .join(crate::brand::SLUG)
+                .join(format!("{}.json", crate::brand::SLUG));
             if let Some(text) = read_file_if_exists(&user_path, MAX_CONFIG_FILE_SIZE, &mut warnings)
             {
                 match Self::parse_collecting_warnings(&text, &mut warnings) {
@@ -517,7 +519,7 @@ impl Config {
 
         // Project config (untrusted — reduced size limit)
         if let Some(dir) = project_dir {
-            let project_path = PathBuf::from(dir).join("chordsketch.json");
+            let project_path = PathBuf::from(dir).join(format!("{}.json", crate::brand::SLUG));
             if let Some(text) =
                 read_file_if_exists(&project_path, MAX_UNTRUSTED_CONFIG_FILE_SIZE, &mut warnings)
             {

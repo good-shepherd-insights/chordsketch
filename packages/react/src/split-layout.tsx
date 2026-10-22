@@ -2,6 +2,7 @@ import type { HTMLAttributes, KeyboardEvent, PointerEvent, ReactNode } from 'rea
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
 
 import { clamp } from './clamp';
+import { SLUG } from './brand.generated';
 
 const DEFAULT_RATIO = 0.5;
 const RATIO_MIN = 0.2;
@@ -155,7 +156,7 @@ export function SplitLayout({
     '--cs-split-stack-below': `${stackBelow}px`,
   } as React.CSSProperties;
 
-  const wrapperClass = ['chordsketch-split-layout', className]
+  const wrapperClass = [`${SLUG}-split-layout`, className]
     .filter(Boolean)
     .join(' ');
 
@@ -185,13 +186,13 @@ export function SplitLayout({
       style={containerStyle}
     >
       <div
-        className="chordsketch-split-layout__pane chordsketch-split-layout__pane--start"
+        className={`${SLUG}-split-layout__pane ${SLUG}-split-layout__pane--start`}
         id={startId}
       >
         {start}
       </div>
       <div
-        className="chordsketch-split-layout__splitter"
+        className={`${SLUG}-split-layout__splitter`}
         role="separator"
         aria-orientation="vertical"
         aria-controls={startId}
@@ -207,7 +208,7 @@ export function SplitLayout({
         onPointerCancel={onPointerUp}
         onKeyDown={onKeyDown}
       />
-      <div className="chordsketch-split-layout__pane chordsketch-split-layout__pane--end">
+      <div className={`${SLUG}-split-layout__pane ${SLUG}-split-layout__pane--end`}>
         {end}
       </div>
     </div>

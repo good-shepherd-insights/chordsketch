@@ -1,7 +1,7 @@
 import type { ChangeEvent, ComponentType, HTMLAttributes, ReactNode } from 'react';
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 
-import type { ChordSelection } from './chordpro-jsx';
+import type { ChordAudioConfig, ChordSelection } from './chordpro-jsx';
 import type {
   ChordDeleteTarget,
   ChordEditEvent,
@@ -11,8 +11,9 @@ import type { PdfExportProps } from './pdf-export';
 import { PreviewToolbar } from './preview-toolbar';
 import { RendererPreview, type PreviewFormat } from './renderer-preview';
 import { Transpose } from './transpose';
-import type { ChordDiagramInstrument } from './use-chord-diagram';
+import type { ChordDiagramInstrument, ChordDiagramOrientation } from './use-chord-diagram';
 import type { ChordWasmLoader } from './use-chord-render';
+import { SLUG } from './brand.generated';
 
 // Minimal `process.env.NODE_ENV` typing so we do not pull in
 // `@types/node` for a single dev-only reference. The exact
@@ -111,6 +112,23 @@ export interface ChordProPreviewProps
   /** Forwarded to the underlying {@link RendererPreview}. */
   chordDiagramsInstrument?: ChordDiagramInstrument;
   /**
+   * Chord-diagram orientation, forwarded to the underlying
+   * {@link RendererPreview}. With `onChordDiagramsOrientationChange` and
+   * `toolbar="performance"`, the toolbar's Diagrams group switches it.
+   */
+  chordDiagramsOrientation?: ChordDiagramOrientation;
+  /** Fires when the performance toolbar's Diagrams group changes. */
+  onChordDiagramsOrientationChange?: (next: ChordDiagramOrientation) => void;
+  /**
+   * Chord audio for the sheet, forwarded to the underlying
+   * {@link RendererPreview} (see `RendererPreviewProps.chordAudio`).
+   */
+  chordAudio?: boolean | ChordAudioConfig | null;
+  /** Whether the performance toolbar's Chord audio toggle shows as on. */
+  chordAudioEnabled?: boolean;
+  /** Fires when the performance toolbar's Chord audio toggle is pressed. */
+  onChordAudioToggle?: (next: boolean) => void;
+  /**
    * Editor↔preview caret sync + chord-editing passthrough (#2644),
    * forwarded verbatim to the underlying {@link RendererPreview} →
    * {@link ChordSheet}. A shell (e.g. {@link ChordProEditor}) wires
@@ -178,6 +196,11 @@ export function ChordProPreview({
   loadingFallback,
   errorFallback,
   chordDiagramsInstrument,
+  chordDiagramsOrientation,
+  onChordDiagramsOrientationChange,
+  chordAudio,
+  chordAudioEnabled,
+  onChordAudioToggle,
   toolbar = 'transpose-only',
   onSourceChange,
   pdfExportFilename,
@@ -302,7 +325,7 @@ export function ChordProPreview({
   }, [isTransposeControlled]);
 
   const formatSelectId = useId();
-  const wrapperClass = ['chordsketch-chord-pro-preview', className]
+  const wrapperClass = [`${SLUG}-chord-pro-preview`, className]
     .filter(Boolean)
     .join(' ');
 
@@ -332,17 +355,17 @@ export function ChordProPreview({
     <div {...divProps} className={wrapperClass}>
       {customHeader}
       {showStandardHeader ? (
-        <header className="chordsketch-chord-pro-preview__header">
-          <div className="chordsketch-chord-pro-preview__controls">
+        <header className={`${SLUG}-chord-pro-preview__header`}>
+          <div className={`${SLUG}-chord-pro-preview__controls`}>
             {showFormatSelect ? (
               <label
                 htmlFor={formatSelectId}
-                className="chordsketch-chord-pro-preview__control-label"
+                className={`${SLUG}-chord-pro-preview__control-label`}
               >
                 Format
                 <select
                   id={formatSelectId}
-                  className="chordsketch-chord-pro-preview__select"
+                  className={`${SLUG}-chord-pro-preview__select`}
                   value={format}
                   onChange={handleFormatChange}
                 >
@@ -356,7 +379,7 @@ export function ChordProPreview({
             ) : null}
             {showHeaderTranspose ? (
               <Transpose
-                className="chordsketch-chord-pro-preview__transpose"
+                className={`${SLUG}-chord-pro-preview__transpose`}
                 value={transposeValue}
                 onChange={handleTransposeChange}
                 min={effectiveTransposeMin}
@@ -377,11 +400,15 @@ export function ChordProPreview({
           transposeMax={effectiveTransposeMax}
           exportFilename={pdfExportFilename}
           pdfExportComponent={pdfExportComponent}
+          chordDiagramsOrientation={chordDiagramsOrientation}
+          onChordDiagramsOrientationChange={onChordDiagramsOrientationChange}
+          chordAudioEnabled={chordAudioEnabled}
+          onChordAudioToggle={onChordAudioToggle}
         />
       ) : null}
-      <div className="chordsketch-chord-pro-preview__body">
+      <div className={`${SLUG}-chord-pro-preview__body`}>
         <RendererPreview
-          className="chordsketch-chord-pro-preview__renderer"
+          className={`${SLUG}-chord-pro-preview__renderer`}
           source={source}
           transpose={transposeValue}
           format={format}
@@ -390,6 +417,8 @@ export function ChordProPreview({
           loadingFallback={loadingFallback}
           errorFallback={errorFallback}
           chordDiagramsInstrument={chordDiagramsInstrument}
+          chordDiagramsOrientation={chordDiagramsOrientation}
+          chordAudio={chordAudio}
           activeSourceLine={activeSourceLine}
           caretColumn={caretColumn}
           caretLineLength={caretLineLength}

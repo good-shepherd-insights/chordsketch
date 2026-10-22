@@ -5,6 +5,7 @@ import { MetronomeButton } from '../src/metronome-button';
 import { resetMetronomeSharedStateForTests } from '../src/use-metronome';
 import { FakeAudioContext } from './fake-audio-context';
 import { readStylesheetSource } from './stylesheet-source';
+import { SLUG } from '../src/brand.generated';
 
 // Web Audio fake: the shared stand-in (`./fake-audio-context`). The
 // button test only needs the graph calls not to throw; timing accuracy
@@ -150,7 +151,7 @@ describe('<MetronomeButton>', () => {
     // The base `.meta-inline` rule (not a `--variant` modifier) must
     // carry `box-sizing: border-box`. Match the rule block and assert
     // the declaration lives inside it.
-    const rule = css.match(/\.chordsketch-sheet__content \.meta-inline \{[^}]*\}/);
+    const rule = css.match(new RegExp(`\\.${SLUG}-sheet__content \\.meta-inline \\{[^}]*\\}`));
     expect(rule).not.toBeNull();
     expect(rule?.[0]).toContain('box-sizing: border-box;');
   });

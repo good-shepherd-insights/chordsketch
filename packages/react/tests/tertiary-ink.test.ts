@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, test } from 'vitest';
 
 import { readStylesheetSource } from './stylesheet-source';
+import { SLUG } from '../src/brand.generated';
 
 /**
  * Selectors allowed to paint with the tertiary tone (`--cs-text-tertiary`
@@ -23,10 +24,10 @@ import { readStylesheetSource } from './stylesheet-source';
  * `--cs-text-secondary` instead.
  */
 const TERTIARY_ALLOWED = [
-  '.chordsketch-sheet__content .role-icon',
-  '.chordsketch-sheet__content .grid-chord__sep',
-  '.chordsketch-sheet__cins-chip:disabled',
-  '.chordsketch-ireal-bar-grid__seg button:disabled',
+  `.${SLUG}-sheet__content .role-icon`,
+  `.${SLUG}-sheet__content .grid-chord__sep`,
+  `.${SLUG}-sheet__cins-chip:disabled`,
+  `.${SLUG}-ireal-bar-grid__seg button:disabled`,
 ];
 
 function selectorsPaintingTertiary(css: string): string[] {

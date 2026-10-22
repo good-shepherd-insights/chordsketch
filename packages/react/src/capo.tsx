@@ -10,6 +10,7 @@ import {
 } from './chord-source-edit';
 import { clamp as clampValue } from './clamp';
 import { useChordproAst } from './use-chordpro-ast';
+import { SLUG } from './brand.generated';
 
 /**
  * Either of the two `<Capo>` shapes. Mirrors `<Transpose>`'s
@@ -297,15 +298,15 @@ export function Capo(props: CapoProps): JSX.Element {
       {...divProps}
       role="group"
       aria-label={ariaLabel}
-      className={['chordsketch-capo', className].filter(Boolean).join(' ')}
+      className={[`${SLUG}-capo`, className].filter(Boolean).join(' ')}
     >
       {label !== null ? (
-        <span className="chordsketch-capo__label" aria-hidden="true">
+        <span className={`${SLUG}-capo__label`} aria-hidden="true">
           {label}
         </span>
       ) : null}
       <select
-        className="chordsketch-capo__select"
+        className={`${SLUG}-capo__select`}
         value={displayValue}
         onChange={handleSelectChange}
         aria-label={ariaLabel}
@@ -319,7 +320,7 @@ export function Capo(props: CapoProps): JSX.Element {
         ))}
       </select>
       {markerDescriptionId ? (
-        <span id={markerDescriptionId} className="chordsketch-capo__sr-only">
+        <span id={markerDescriptionId} className={`${SLUG}-capo__sr-only`}>
           ★ marks the easiest capo position{markers.length === 1 ? '' : 's'} —
           chord roots use the fewest accidentals there.
         </span>
@@ -334,7 +335,7 @@ export function Capo(props: CapoProps): JSX.Element {
           flight (loading spinners belong to the host). */}
       {sourceMode && sourceAstError && !sourceAstLoading ? (
         <span
-          className="chordsketch-capo__hint chordsketch-capo__hint--error"
+          className={`${SLUG}-capo__hint ${SLUG}-capo__hint--error`}
           role="status"
           aria-live="polite"
         >

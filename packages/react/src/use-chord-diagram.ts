@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 
 import { initWasm } from './wasm-init';
+import { BRAND } from './brand.generated';
 
 // Narrow WASM surface this hook touches. Kept structural so the
 // React package does not drag the WASM glue into its type graph —
@@ -270,7 +271,7 @@ export function useChordDiagram(
               staleBundleWarnings.add(staleCompactKey);
               // eslint-disable-next-line no-console
               console.warn(
-                '[@chordsketch/react] useChordDiagram: the loaded @chordsketch/wasm bundle ' +
+                `[${BRAND.consolePrefix}] useChordDiagram: the loaded wasm engine bundle ` +
                   'does not expose chordDiagramSvgWithDefinesOrientationCompact; rendering the ' +
                   'regular (full-size) diagram. Update @chordsketch/wasm to honour the ' +
                   'compact prop.',
@@ -292,7 +293,7 @@ export function useChordDiagram(
             staleBundleWarnings.add(staleOrientationKey);
             // eslint-disable-next-line no-console
             console.warn(
-              '[@chordsketch/react] useChordDiagram: the loaded @chordsketch/wasm bundle ' +
+              `[${BRAND.consolePrefix}] useChordDiagram: the loaded wasm engine bundle ` +
                 'does not expose chordDiagramSvgWithDefinesOrientation; rendering in the ' +
                 'legacy vertical layout. Update @chordsketch/wasm to honour the ' +
                 'orientation prop.',
@@ -408,7 +409,7 @@ export function useChordDiagramPitches(
             stalePitchesWarnings.add(key);
             // eslint-disable-next-line no-console
             console.warn(
-              '[@chordsketch/react] useChordDiagramPitches: the loaded @chordsketch/wasm ' +
+              `[${BRAND.consolePrefix}] useChordDiagramPitches: the loaded wasm engine ` +
                 'bundle does not expose diagramPitches; chord diagrams will fall back to the ' +
                 'name-based block voicing when played. Update @chordsketch/wasm to audition ' +
                 'the diagram voicing.',
