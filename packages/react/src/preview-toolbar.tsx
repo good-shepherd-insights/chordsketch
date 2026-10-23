@@ -17,7 +17,7 @@ import { BRAND, SLUG } from './brand.generated';
 
 /** Props accepted by {@link PreviewToolbar}. */
 /** Where the chord editor popup opens relative to the clicked chord. */
-export type ChordEditorPosition = 'top' | 'bottom';
+export type ChordEditorPosition = 'top' | 'bottom' | 'popup';
 
 export interface PreviewToolbarProps
   extends Omit<HTMLAttributes<HTMLDivElement>, 'children' | 'onChange'> {
@@ -95,7 +95,7 @@ export interface PreviewToolbarProps
   onChordDiagramsChange?: (next: ChordDiagramOrientation | 'off') => void;
   /** Where the chord editor popup opens: above or below the chord. */
   chordEditorPosition?: ChordEditorPosition;
-  /** With this, the toolbar shows a Chord editor Top / Bottom toggle. */
+  /** With this, the toolbar shows a Chord editor Fixed top / Fixed bottom / Popup toggle. */
   onChordEditorPositionChange?: (next: ChordEditorPosition) => void;
   /**
    * Force-show / force-hide the Diagrams group. Defaults to true
@@ -250,7 +250,7 @@ export function PreviewToolbar({
   onChordDiagramsOrientationChange,
   chordDiagramsOff,
   onChordDiagramsChange,
-  chordEditorPosition = 'bottom',
+  chordEditorPosition = 'popup',
   onChordEditorPositionChange,
   showChordDiagrams,
   chordAudioEnabled,
@@ -353,14 +353,14 @@ export function PreviewToolbar({
             Chord editor
           </span>
           <span className={`${SLUG}-preview-toolbar__segmented`}>
-            {(['top', 'bottom'] as const).map((value) => (
+            {(['top', 'bottom', 'popup'] as const).map((value) => (
               <button
                 key={value}
                 type="button"
                 aria-pressed={chordEditorPosition === value}
                 onClick={() => onChordEditorPositionChange(value)}
               >
-                {value === 'top' ? 'Top' : 'Bottom'}
+                {value === 'top' ? 'Fixed top' : value === 'bottom' ? 'Fixed bottom' : 'Popup'}
               </button>
             ))}
           </span>

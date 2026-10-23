@@ -123,9 +123,9 @@ export interface ChordProPreviewProps
   chordDiagramsOff?: boolean;
   /** Forwarded to {@link PreviewToolbar} (Diagrams Off). */
   onChordDiagramsChange?: (next: ChordDiagramOrientation | 'off') => void;
-  /** Forwarded to {@link PreviewToolbar} (Chord editor Top / Bottom). */
+  /** Forwarded to {@link PreviewToolbar} (Chord editor Fixed top / Fixed bottom / Popup). */
   chordEditorPosition?: ChordEditorPosition;
-  /** Forwarded to {@link PreviewToolbar} (Chord editor Top / Bottom). */
+  /** Forwarded to {@link PreviewToolbar} (Chord editor Fixed top / Fixed bottom / Popup). */
   onChordEditorPositionChange?: (next: ChordEditorPosition) => void;
   /**
    * Chord audio for the sheet, forwarded to the underlying

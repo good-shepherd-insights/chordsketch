@@ -144,8 +144,9 @@ export interface ChordProEditorProps
   wasmLoader?: ChordWasmLoader;
 }
 
-/** Where the chord editor popup position is remembered in this browser. */
-const POPUP_POSITION_KEY = `${SLUG}-chord-editor-position`;
+/** Where the chord editor's mode (fixed top, fixed bottom, popup) is
+ * remembered in this browser. */
+const POPUP_POSITION_KEY = `${SLUG}-chord-editor-mode`;
 /** Popup width (px), and its gap to the chord and to the window edge. */
 const POPUP_WIDTH = 560;
 const POPUP_GAP = 10;
@@ -157,15 +158,19 @@ function popupLeft(chord: DOMRect): number {
   return Math.max(POPUP_EDGE, Math.min(chord.left - 20, window.innerWidth - width - POPUP_EDGE));
 }
 
-/** Fixed-position style for the popup above or below the chord. */
-function popupStyle(chord: DOMRect, position: ChordEditorPosition): CSSProperties {
+/** Fixed-position style for the popup below the chord. */
+function popupStyle(chord: DOMRect): CSSProperties {
   return {
     left: popupLeft(chord),
     width: Math.min(POPUP_WIDTH, window.innerWidth - 2 * POPUP_EDGE),
-    ...(position === 'top'
-      ? { top: chord.top - POPUP_GAP, transform: 'translateY(-100%)' }
-      : { top: chord.bottom + POPUP_GAP }),
+    top: chord.bottom + POPUP_GAP,
   };
+}
+
+/** Fixed-position style for the strip docked to the top or bottom of the
+ * window, as wide as the editor. */
+function dockStyle(editor: DOMRect): CSSProperties {
+  return { left: editor.left, width: editor.width };
 }
 
 /** The tip's offset inside the popup, pointing at the chord's centre and
@@ -297,9 +302,10 @@ export function ChordProEditor({
   // panes.
   const [popupPosition, setPopupPosition] = useState<ChordEditorPosition>(() => {
     try {
-      return window.localStorage.getItem(POPUP_POSITION_KEY) === 'top' ? 'top' : 'bottom';
+      const saved = window.localStorage.getItem(POPUP_POSITION_KEY);
+      return saved === 'top' || saved === 'bottom' ? saved : 'popup';
     } catch {
-      return 'bottom';
+      return 'popup';
     }
   });
   const changePopupPosition = useCallback((next: ChordEditorPosition) => {
@@ -312,20 +318,24 @@ export function ChordProEditor({
   }, []);
   const rootRef = useRef<HTMLDivElement | null>(null);
   const [anchor, setAnchor] = useState<DOMRect | null>(null);
+  const [frame, setFrame] = useState<DOMRect | null>(null);
   const selected = chordEditor.chordSelection != null;
   useLayoutEffect(() => {
     const root = rootRef.current;
     if (!selected || !root || shownView === 'source') {
       setAnchor(null);
+      setFrame(null);
       return undefined;
     }
-    // The selected chord's box on screen. Re-read when the sheet re-renders
-    // (the walker draws asynchronously), scrolls or resizes.
+    // The selected chord's box on screen, and the editor's. Re-read when
+    // the sheet re-renders (the walker draws asynchronously), scrolls or
+    // resizes.
     const measure = (): void => {
       const chord = root.querySelector(
         `.${SLUG}-chord-pro-editor__preview-pane .chord--selected`,
       );
       setAnchor(chord ? chord.getBoundingClientRect() : null);
+      setFrame(root.getBoundingClientRect());
     };
     measure();
     const observer = new MutationObserver(measure);
@@ -345,16 +355,19 @@ export function ChordProEditor({
   // the selection there.
   const popupRef = useRef<HTMLDivElement | null>(null);
   const { onChordSelectionChange } = chordEditor;
-  const popupOpen = anchor != null;
+  const popupOpen = popupPosition === 'popup' ? anchor != null : selected && frame != null;
   useEffect(() => {
     if (!popupOpen) return undefined;
     const onPointerDown = (event: PointerEvent): void => {
-      const target = event.target as Node | null;
-      if (!target || popupRef.current?.contains(target)) return;
+      // The event's path, not its target: inside a shadow root (a host that
+      // isolates the editor's styles) a listener on the document sees the
+      // shadow host as the target, never the element pressed.
+      const path = event.composedPath();
+      if (popupRef.current && path.includes(popupRef.current)) return;
       const panes = rootRef.current?.querySelectorAll(
         `.${SLUG}-chord-pro-editor__preview-pane, .${SLUG}-chord-pro-editor__source-pane`,
       );
-      if (panes && Array.from(panes).some((pane) => pane.contains(target))) return;
+      if (panes && Array.from(panes).some((pane) => path.includes(pane))) return;
       onChordSelectionChange(null);
     };
     document.addEventListener('pointerdown', onPointerDown, true);
@@ -528,18 +541,34 @@ export function ChordProEditor({
         </div>
       )}
 
-      {anchor ? (
-        // The chord editor as a popup on the selected chord.
+      {popupOpen ? (
+        // The chord editor for the selected chord: a popup under it, or a
+        // strip fixed to the top or bottom of the window.
         <div
           ref={popupRef}
           className={`${SLUG}-chord-pro-editor__chord-footer ${SLUG}-chord-pro-editor__chord-popup ${SLUG}-chord-pro-editor__chord-popup--${popupPosition}`}
-          style={popupStyle(anchor, popupPosition)}
+          style={
+            popupPosition === 'popup' && anchor
+              ? popupStyle(anchor)
+              : frame
+                ? dockStyle(frame)
+                : undefined
+          }
+          onKeyDown={(event) => {
+            // Enter closes the popup; edits are already applied as made.
+            if (event.key === 'Enter') {
+              event.preventDefault();
+              chordEditor.onChordSelectionChange(null);
+            }
+          }}
         >
-          <span
-            className={`${SLUG}-chord-pro-editor__chord-popup-tip`}
-            aria-hidden="true"
-            style={{ left: tipLeft(anchor) }}
-          />
+          {popupPosition === 'popup' && anchor ? (
+            <span
+              className={`${SLUG}-chord-pro-editor__chord-popup-tip`}
+              aria-hidden="true"
+              style={{ left: tipLeft(anchor) }}
+            />
+          ) : null}
           <ChordInspector
             {...chordEditor.inspectorProps}
             onClose={() => chordEditor.onChordSelectionChange(null)}

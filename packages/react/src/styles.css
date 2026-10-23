@@ -1988,10 +1988,11 @@
   gap: var(--cs-sp-2, 0.5rem);
   align-self: center;
 }
-/* The chord editor as a popup on the selected chord in the preview
-   (fixed to the window, placed by ChordProEditor above or below the
-   chord). Same controls and row layout as the footer band; a floating
-   card instead of a full-width strip. */
+/* The chord editor for the selected chord, fixed to the window by
+   ChordProEditor in one of three modes: a popup card under the chord
+   (--popup), or a strip as wide as the editor docked to the top
+   (--top) or bottom (--bottom) of the window. Same controls and row
+   layout as the footer band. */
 .visionschool-chord-pro-editor__chord-popup {
   position: fixed;
   z-index: 1000;
@@ -2005,6 +2006,28 @@
   padding: var(--cs-sp-4, 1rem);
   border-radius: var(--cs-r-4, 12px);
 }
+/* Docked strips: square corners, the border and shadow on the side
+   facing the page. --visionschool-chord-editor-top lets a host with its
+   own fixed header keep the top strip below it. */
+.visionschool-chord-pro-editor__chord-popup--top,
+.visionschool-chord-pro-editor__chord-popup--bottom {
+  border-width: 0;
+  border-radius: 0;
+}
+.visionschool-chord-pro-editor__chord-popup--top {
+  top: var(--visionschool-chord-editor-top, 0px);
+  border-bottom-width: 1px;
+  box-shadow: 0 8px 24px rgba(10, 10, 11, 0.08);
+}
+.visionschool-chord-pro-editor__chord-popup--bottom {
+  bottom: 0;
+  border-top-width: 1px;
+  box-shadow: 0 -8px 24px rgba(10, 10, 11, 0.08);
+}
+.visionschool-chord-pro-editor__chord-popup--top .visionschool-sheet__cins,
+.visionschool-chord-pro-editor__chord-popup--bottom .visionschool-sheet__cins {
+  border-radius: 0;
+}
 /* The tip pointing at the chord: a square turned 45°, with the card's
    border on its two outer sides. */
 .visionschool-chord-pro-editor__chord-popup-tip {
@@ -2015,15 +2038,10 @@
   border: 1px solid var(--cs-border-strong, #D4D1D6);
   transform: rotate(45deg);
 }
-.visionschool-chord-pro-editor__chord-popup--bottom .visionschool-chord-pro-editor__chord-popup-tip {
+.visionschool-chord-pro-editor__chord-popup--popup .visionschool-chord-pro-editor__chord-popup-tip {
   top: -7px;
   border-right: 0;
   border-bottom: 0;
-}
-.visionschool-chord-pro-editor__chord-popup--top .visionschool-chord-pro-editor__chord-popup-tip {
-  bottom: -7px;
-  border-left: 0;
-  border-top: 0;
 }
 /* Hide the empty placeholder span the footer renders when there is no
    Remove button (idle), so it does not add a gap before Insert. */
