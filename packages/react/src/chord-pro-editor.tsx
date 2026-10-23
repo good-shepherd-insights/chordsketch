@@ -5,6 +5,7 @@ import { ChordInspector } from './chord-inspector';
 import { ChordProPreview } from './chord-pro-preview';
 import { ChordSourceArea, type ChordSourceAreaHandle } from './chord-source-area';
 import { InsertToolbar } from './insert-toolbar';
+import { diagramsSetting, withDiagrams } from './source-directives';
 import type { PdfExportProps } from './pdf-export';
 import type { PreviewFormat } from './renderer-preview';
 import type { ChordDiagramOrientation } from './use-chord-diagram';
@@ -190,9 +191,8 @@ export function ChordProEditor({
   className,
   ...divProps
 }: ChordProEditorProps): JSX.Element {
-  // Performance toolbar state: chord-diagram orientation and chord audio.
-  const [diagramsOrientation, setDiagramsOrientation] =
-    useState<ChordDiagramOrientation>('vertical');
+  // Performance toolbar state: chord audio. Chord diagrams are part of
+  // the song (a {diagrams} line), so they come from the source.
   const [chordAudioEnabled, setChordAudioEnabled] = useState(false);
   // Which panes show: both, or one of them alone (viewToggle).
   const [view, setView] = useState<EditorView>(() =>
@@ -213,6 +213,15 @@ export function ChordProEditor({
       onSourceChange?.(next);
     },
     [isSourceControlled, onSourceChange],
+  );
+
+  const diagrams = diagramsSetting(source);
+  const setDiagrams = useCallback(
+    (next: ChordDiagramOrientation | 'off') => {
+      const updated = withDiagrams(source, next);
+      if (updated !== source) handleSourceChange(updated);
+    },
+    [source, handleSourceChange],
   );
 
   // Transpose — controlled vs uncontrolled, tracked here (not only in
@@ -340,9 +349,12 @@ export function ChordProEditor({
             onSourceChange: handleSourceChange,
             transposeMin: -6,
             transposeMax: 6,
-            chordDiagramsInstrument: 'guitar' as const,
-            chordDiagramsOrientation: diagramsOrientation,
-            onChordDiagramsOrientationChange: setDiagramsOrientation,
+            chordDiagramsInstrument:
+              diagrams === 'off' ? undefined : ('guitar' as const),
+            chordDiagramsOrientation: diagrams === 'off' ? 'vertical' : diagrams,
+            onChordDiagramsOrientationChange: setDiagrams,
+            chordDiagramsOff: diagrams === 'off',
+            onChordDiagramsChange: setDiagrams,
             chordAudio: chordEditor.chordAudio,
             chordAudioEnabled,
             onChordAudioToggle: setChordAudioEnabled,

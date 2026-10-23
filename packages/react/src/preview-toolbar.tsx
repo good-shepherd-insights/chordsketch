@@ -83,6 +83,14 @@ export interface PreviewToolbarProps
   /** Fires when the user picks a new orientation in the Diagrams group. */
   onChordDiagramsOrientationChange?: (next: ChordDiagramOrientation) => void;
   /**
+   * Diagrams written into the song: with `onChordDiagramsChange`, the
+   * Diagrams group also offers Off, and a pick fires that one handler
+   * (in place of `onChordDiagramsOrientationChange`). `true` shows Off.
+   */
+  chordDiagramsOff?: boolean;
+  /** Fires with the Diagrams pick when `chordDiagramsOff` is in use. */
+  onChordDiagramsChange?: (next: ChordDiagramOrientation | 'off') => void;
+  /**
    * Force-show / force-hide the Diagrams group. Defaults to true
    * when `onChordDiagramsOrientationChange` is provided, false
    * otherwise. Pass an explicit value to override the auto-default.
@@ -233,6 +241,8 @@ export function PreviewToolbar({
   wasmLoader,
   chordDiagramsOrientation,
   onChordDiagramsOrientationChange,
+  chordDiagramsOff,
+  onChordDiagramsChange,
   showChordDiagrams,
   chordAudioEnabled,
   onChordAudioToggle,
@@ -308,14 +318,17 @@ export function PreviewToolbar({
           </span>
           <select
             className={`${SLUG}-preview-toolbar__diagrams-orientation`}
-            value={effectiveOrientation}
+            value={onChordDiagramsChange && chordDiagramsOff ? 'off' : effectiveOrientation}
             aria-labelledby={`${SLUG}-preview-toolbar-diagrams-orientation-label`}
             onChange={(e) =>
-              onChordDiagramsOrientationChange!(
-                e.target.value as ChordDiagramOrientation,
-              )
+              onChordDiagramsChange
+                ? onChordDiagramsChange(e.target.value as ChordDiagramOrientation | 'off')
+                : onChordDiagramsOrientationChange!(
+                    e.target.value as ChordDiagramOrientation,
+                  )
             }
           >
+            {onChordDiagramsChange ? <option value="off">Off</option> : null}
             <option value="vertical">Vertical (nut top)</option>
             <option value="horizontal">Horizontal (nut left)</option>
           </select>

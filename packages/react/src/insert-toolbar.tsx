@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import type { ChordSourceAreaHandle } from './chord-source-area';
 import { loadChordproCatalog, type DirectiveCatalogEntry } from './chordpro-completion';
 import { SLUG } from './brand.generated';
+import { withHeaderLines, withoutLines } from './source-directives';
 
 /** Props for {@link InsertToolbar}. */
 export interface InsertToolbarProps {
@@ -35,13 +36,8 @@ function chordsAreBold(source: string): boolean {
  * under the song's leading directives, such as title and key).
  */
 function withChordWeight(source: string, bold: boolean): string {
-  const lines = source.replace(CHORD_FONT_LINE, '\u0000').split('\n').filter((l) => l !== '\u0000');
-  if (!bold) {
-    let at = 0;
-    while (at < lines.length && /^\s*\{(?!\s*(?:start_of_|so[cvbtg]\b))[^}]*\}\s*$/i.test(lines[at])) at++;
-    lines.splice(at, 0, `{chordfont: ${REGULAR_CHORD_FONT}}`);
-  }
-  return lines.join('\n');
+  const base = withoutLines(source, CHORD_FONT_LINE);
+  return bold ? base : withHeaderLines(base, [`{chordfont: ${REGULAR_CHORD_FONT}}`]);
 }
 
 /**

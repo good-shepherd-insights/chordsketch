@@ -119,6 +119,10 @@ export interface ChordProPreviewProps
   chordDiagramsOrientation?: ChordDiagramOrientation;
   /** Fires when the performance toolbar's Diagrams group changes. */
   onChordDiagramsOrientationChange?: (next: ChordDiagramOrientation) => void;
+  /** Forwarded to {@link PreviewToolbar} (Diagrams Off). */
+  chordDiagramsOff?: boolean;
+  /** Forwarded to {@link PreviewToolbar} (Diagrams Off). */
+  onChordDiagramsChange?: (next: ChordDiagramOrientation | 'off') => void;
   /**
    * Chord audio for the sheet, forwarded to the underlying
    * {@link RendererPreview} (see `RendererPreviewProps.chordAudio`).
@@ -198,6 +202,8 @@ export function ChordProPreview({
   chordDiagramsInstrument,
   chordDiagramsOrientation,
   onChordDiagramsOrientationChange,
+  chordDiagramsOff,
+  onChordDiagramsChange,
   chordAudio,
   chordAudioEnabled,
   onChordAudioToggle,
@@ -402,6 +408,8 @@ export function ChordProPreview({
           pdfExportComponent={pdfExportComponent}
           chordDiagramsOrientation={chordDiagramsOrientation}
           onChordDiagramsOrientationChange={onChordDiagramsOrientationChange}
+          chordDiagramsOff={chordDiagramsOff}
+          onChordDiagramsChange={onChordDiagramsChange}
           chordAudioEnabled={chordAudioEnabled}
           onChordAudioToggle={onChordAudioToggle}
         />
