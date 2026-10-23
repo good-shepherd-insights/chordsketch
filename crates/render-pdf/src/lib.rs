@@ -1478,6 +1478,7 @@ fn render_song_into_doc(
         } else {
             let defines = song.fretted_defines();
             let displays = song.define_displays();
+            let mut diagrams = Vec::new();
             for name in chord_names {
                 if let Some(mut diagram) =
                     chordsketch_chordpro::lookup_diagram(&name, &defines, instrument, diagram_frets)
@@ -1485,9 +1486,10 @@ fn render_song_into_doc(
                     if let Some(display) = displays.get(&name) {
                         diagram.display_name = Some(display.clone());
                     }
-                    render_chord_diagram_pdf(&diagram, doc, diagram_orientation);
+                    diagrams.push(diagram);
                 }
             }
+            render_chord_diagram_grid(&diagrams, doc, diagram_orientation);
         }
     }
 }
@@ -2161,6 +2163,22 @@ impl PdfTitleLayout {
         }
     }
 
+    /// Width of the drawn title in points: the base name, plus the bracketed
+    /// tension column when there is one (the same advances `draw` uses).
+    fn width(&self) -> f32 {
+        let base = text_width(&self.base, self.base_font);
+        if self.tensions.is_empty() {
+            return base;
+        }
+        let col_w = self
+            .tensions
+            .iter()
+            .map(|t| text_width(t, self.tension_font))
+            .fold(0.0_f32, f32::max);
+        let paren_w = text_width("(", self.paren_font);
+        base + 1.0 + paren_w + 1.0 + col_w + 1.0 + paren_w
+    }
+
     /// Draw the title with its base-name baseline at (`base_x`, `baseline_y`).
     /// For a single-line title this is exactly the historical
     /// `text_at(title, …, base_x, baseline_y)` call.
@@ -2233,6 +2251,57 @@ fn render_chord_diagram_pdf(
     doc: &mut PdfDocument,
     orientation: chordsketch_chordpro::chord_diagram::Orientation,
 ) {
+    let Some((_, height)) = chord_diagram_box(data, orientation) else {
+        return;
+    };
+    doc.ensure_space(height);
+    let x = doc.margin_left();
+    draw_chord_diagram_pdf(data, doc, orientation, x);
+    doc.advance_y(height);
+    doc.newline(LINE_GAP);
+}
+
+/// Horizontal space between two diagrams in a row of the end-of-song grid,
+/// in points. It also holds the next diagram's fret numbers (vertical) or
+/// open/muted markers (horizontal), which are drawn left of its grid.
+const DIAGRAM_ROW_GAP: f32 = 18.0;
+
+/// The end-of-song chord diagrams (`{diagrams}`), side by side: as many
+/// diagrams per row as fit the column, every cell as wide as the widest
+/// diagram, each row as tall as its tallest diagram.
+fn render_chord_diagram_grid(
+    diagrams: &[chordsketch_chordpro::chord_diagram::DiagramData],
+    doc: &mut PdfDocument,
+    orientation: chordsketch_chordpro::chord_diagram::Orientation,
+) {
+    let boxed: Vec<_> = diagrams
+        .iter()
+        .filter_map(|d| chord_diagram_box(d, orientation).map(|b| (d, b)))
+        .collect();
+    let Some(widest) = boxed.iter().map(|(_, (w, _))| *w).reduce(f32::max) else {
+        return;
+    };
+    let cell_w = widest + DIAGRAM_ROW_GAP;
+    let per_row = (((doc.column_width() + DIAGRAM_ROW_GAP) / cell_w).floor() as usize).max(1);
+    for row in boxed.chunks(per_row) {
+        let height = row.iter().map(|(_, (_, h))| *h).fold(0.0_f32, f32::max);
+        doc.ensure_space(height);
+        let x0 = doc.margin_left();
+        for (k, (data, _)) in row.iter().enumerate() {
+            draw_chord_diagram_pdf(data, doc, orientation, x0 + k as f32 * cell_w);
+        }
+        doc.advance_y(height);
+        doc.newline(LINE_GAP);
+    }
+}
+
+/// The width (grid or title, whichever is wider) and height a chord diagram
+/// takes in `orientation`, or `None` when it is out of range and is not
+/// drawn.
+fn chord_diagram_box(
+    data: &chordsketch_chordpro::chord_diagram::DiagramData,
+    orientation: chordsketch_chordpro::chord_diagram::Orientation,
+) -> Option<(f32, f32)> {
     use chordsketch_chordpro::chord_diagram::Orientation;
 
     // Guard: mirror render_svg bounds checks for strings, frets_shown, and
@@ -2245,12 +2314,36 @@ fn render_chord_diagram_pdf(
         || data.base_fret < 1
         || data.base_fret > chordsketch_chordpro::chord_diagram::MAX_BASE_FRET
     {
-        return;
+        return None;
     }
+    let title = PdfTitleLayout::new(data.title(), 9.0);
+    let strings_span = (data.strings - 1) as f32 * 10.0;
+    let frets_span = data.frets_shown as f32 * 12.0;
+    let (grid_w, height) = match orientation {
+        Orientation::Horizontal => (
+            frets_span,
+            strings_span + HORIZONTAL_DIAGRAM_TITLE_BUDGET + title.extra_above,
+        ),
+        // Vertical, and the vertical fallback for an unknown variant.
+        _ => (strings_span, frets_span + 25.0 + title.extra_above),
+    };
+    Some((grid_w.max(title.width()), height))
+}
+
+/// Draw one chord diagram with its left edge at `x` and its top at the
+/// current y, without moving the cursor (see [`render_chord_diagram_pdf`]
+/// and [`render_chord_diagram_grid`], which reserve and advance the space).
+fn draw_chord_diagram_pdf(
+    data: &chordsketch_chordpro::chord_diagram::DiagramData,
+    doc: &mut PdfDocument,
+    orientation: chordsketch_chordpro::chord_diagram::Orientation,
+    x: f32,
+) {
+    use chordsketch_chordpro::chord_diagram::Orientation;
 
     match orientation {
-        Orientation::Vertical => render_chord_diagram_pdf_vertical(data, doc),
-        Orientation::Horizontal => render_chord_diagram_pdf_horizontal(data, doc),
+        Orientation::Vertical => render_chord_diagram_pdf_vertical(data, doc, x),
+        Orientation::Horizontal => render_chord_diagram_pdf_horizontal(data, doc, x),
         // `Orientation` is `#[non_exhaustive]` and lives in a different
         // crate, so the wildcard is the only forward-compat shape the
         // compiler accepts here. A future variant (e.g. `HorizontalLefty`)
@@ -2274,7 +2367,7 @@ fn render_chord_diagram_pdf(
                 "render_chord_diagram_pdf: unknown Orientation variant {other:?} \
                  fell through to vertical; teach this renderer about it",
             );
-            render_chord_diagram_pdf_vertical(data, doc);
+            render_chord_diagram_pdf_vertical(data, doc, x);
         }
     }
 }
@@ -2285,6 +2378,7 @@ fn render_chord_diagram_pdf(
 fn render_chord_diagram_pdf_vertical(
     data: &chordsketch_chordpro::chord_diagram::DiagramData,
     doc: &mut PdfDocument,
+    base_x: f32,
 ) {
     // PDF cell dimensions in points (1 pt = 1/72 inch). Intentionally
     // smaller than the SVG renderer's 16x20 px because PDF targets printed
@@ -2299,11 +2393,7 @@ fn render_chord_diagram_pdf_vertical(
     // and stacked above the title baseline, so the marker/grid bands below are
     // unchanged. `extra_above` reserves the extra height the stack needs.
     let title = PdfTitleLayout::new(data.title(), 9.0);
-    let total_h = grid_h + 25.0 + title.extra_above; // title + top markers + grid
 
-    doc.ensure_space(total_h);
-
-    let base_x = doc.margin_left();
     // PDF Y is bottom-up, so top of diagram is at doc.y; the stack rises into
     // the reserved `extra_above` headroom above the baseline.
     let top_y = doc.y() - title.extra_above;
@@ -2395,9 +2485,6 @@ fn render_chord_diagram_pdf_vertical(
             }
         }
     }
-
-    doc.advance_y(total_h);
-    doc.newline(LINE_GAP);
 }
 
 /// Horizontal PDF chord-diagram layout (#2572). Nut on the left, frets
@@ -2408,6 +2495,7 @@ fn render_chord_diagram_pdf_vertical(
 fn render_chord_diagram_pdf_horizontal(
     data: &chordsketch_chordpro::chord_diagram::DiagramData,
     doc: &mut PdfDocument,
+    base_x: f32,
 ) {
     // Semantic axis pitches in horizontal mode (mirrors the SVG renderer):
     // the fret axis is the wider dimension and the string axis is the
@@ -2432,11 +2520,7 @@ fn render_chord_diagram_pdf_horizontal(
     //
     // Stacked-tension title (#2719) — same split as the vertical renderer.
     let title = PdfTitleLayout::new(data.title(), 9.0);
-    let total_h = grid_h + HORIZONTAL_DIAGRAM_TITLE_BUDGET + title.extra_above;
 
-    doc.ensure_space(total_h);
-
-    let base_x = doc.margin_left();
     let top_y = doc.y() - title.extra_above;
 
     // Chord name (uses display override if present). Centred above the
@@ -2532,9 +2616,6 @@ fn render_chord_diagram_pdf_horizontal(
             }
         }
     }
-
-    doc.advance_y(total_h);
-    doc.newline(LINE_GAP);
 }
 
 /// Render a keyboard (piano) chord diagram directly into the PDF content stream.

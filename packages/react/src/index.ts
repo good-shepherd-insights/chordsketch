@@ -36,6 +36,7 @@ export {
 export {
   PreviewToolbar,
   type PreviewToolbarProps,
+  type ChordEditorPosition,
 } from './preview-toolbar';
 export {
   useTranspose,
@@ -148,6 +149,7 @@ export {
 export {
   ChordProEditor,
   type ChordProEditorProps,
+  type EditorView,
 } from './chord-pro-editor';
 export { InsertToolbar, type InsertToolbarProps } from './insert-toolbar';
 

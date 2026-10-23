@@ -16,6 +16,9 @@ import type {
 import { BRAND, SLUG } from './brand.generated';
 
 /** Props accepted by {@link PreviewToolbar}. */
+/** Where the chord editor popup opens relative to the clicked chord. */
+export type ChordEditorPosition = 'top' | 'bottom';
+
 export interface PreviewToolbarProps
   extends Omit<HTMLAttributes<HTMLDivElement>, 'children' | 'onChange'> {
   /** ChordPro source. Required for the Capo and Export groups. */
@@ -90,6 +93,10 @@ export interface PreviewToolbarProps
   chordDiagramsOff?: boolean;
   /** Fires with the Diagrams pick when `chordDiagramsOff` is in use. */
   onChordDiagramsChange?: (next: ChordDiagramOrientation | 'off') => void;
+  /** Where the chord editor popup opens: above or below the chord. */
+  chordEditorPosition?: ChordEditorPosition;
+  /** With this, the toolbar shows a Chord editor Top / Bottom toggle. */
+  onChordEditorPositionChange?: (next: ChordEditorPosition) => void;
   /**
    * Force-show / force-hide the Diagrams group. Defaults to true
    * when `onChordDiagramsOrientationChange` is provided, false
@@ -243,6 +250,8 @@ export function PreviewToolbar({
   onChordDiagramsOrientationChange,
   chordDiagramsOff,
   onChordDiagramsChange,
+  chordEditorPosition = 'bottom',
+  onChordEditorPositionChange,
   showChordDiagrams,
   chordAudioEnabled,
   onChordAudioToggle,
@@ -332,6 +341,29 @@ export function PreviewToolbar({
             <option value="vertical">Vertical (nut top)</option>
             <option value="horizontal">Horizontal (nut left)</option>
           </select>
+        </div>
+      ) : null}
+      {onChordEditorPositionChange ? (
+        <div
+          className={`${SLUG}-preview-toolbar__group tool-group ${SLUG}-preview-toolbar__group--chord-editor`}
+          role="group"
+          aria-label="Chord editor position"
+        >
+          <span className={`${SLUG}-preview-toolbar__label label`} aria-hidden="true">
+            Chord editor
+          </span>
+          <span className={`${SLUG}-preview-toolbar__segmented`}>
+            {(['top', 'bottom'] as const).map((value) => (
+              <button
+                key={value}
+                type="button"
+                aria-pressed={chordEditorPosition === value}
+                onClick={() => onChordEditorPositionChange(value)}
+              >
+                {value === 'top' ? 'Top' : 'Bottom'}
+              </button>
+            ))}
+          </span>
         </div>
       ) : null}
       {audioEnabled ? (

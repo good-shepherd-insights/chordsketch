@@ -147,6 +147,28 @@ export function useChordEditor({
 }: UseChordEditorParams): UseChordEditor {
   const [caret, setCaret] = useState<CaretPosition | null>(null);
   const onCaretChange = useCallback((next: CaretPosition) => setCaret(next), []);
+  // Move the caret to an absolute source offset. Through the source editor
+  // when it is mounted (it reports the caret back via onCaretChange); with
+  // only the preview shown there is no source editor, so the caret is
+  // kept here directly and the preview's chord selection still works.
+  const placeCaret = useCallback(
+    (text: string, offset: number) => {
+      if (editorRef.current) {
+        editorRef.current.setCaret(offset);
+        return;
+      }
+      const lines = text.split('\n');
+      let base = 0;
+      let line = 1;
+      while (line < lines.length && base + lines[line - 1].length < offset) {
+        base += lines[line - 1].length + 1;
+        line += 1;
+      }
+      const lineLength = lines[line - 1]?.length ?? 0;
+      setCaret({ line, column: Math.min(offset - base, lineLength), lineLength });
+    },
+    [editorRef],
+  );
 
   // Single chord-audio instance shared by the preview (via the exposed
   // `chordAudio` config) and the panel-edit playback below, so a
@@ -228,10 +250,10 @@ export function useChordEditor({
     const pending = pendingCaretRef.current;
     if (pending == null) return;
     if (pending.text === source) {
-      editorRef.current?.setCaret(pending.offset);
+      placeCaret(source, pending.offset);
     }
     pendingCaretRef.current = null;
-  }, [source, editorRef]);
+  }, [source, placeCaret]);
 
   const commit = useCallback(
     (result: ChordRepositionResult, caretTarget?: number) => {
@@ -379,7 +401,7 @@ export function useChordEditor({
           const lineText = source.split('\n')[caretChord.line - 1] ?? '';
           target = base + lineText.length;
         }
-        editorRef.current?.setCaret(target);
+        placeCaret(source, target);
         // Then drop editor focus entirely so no caret lingers blinking
         // after the deselect — the user dismissed the chord, they did
         // not ask to keep editing at the off-chord position. setCaret
@@ -393,9 +415,9 @@ export function useChordEditor({
       if (offset == null) return;
       // Move the editor caret just inside the clicked chord's bracket;
       // the caret path then re-resolves it as the selection.
-      editorRef.current?.setCaret(offset + 1);
+      placeCaret(source, offset + 1);
     },
-    [source, editorRef, caretChord],
+    [source, editorRef, caretChord, placeCaret],
   );
 
   const canLeft = caretChord

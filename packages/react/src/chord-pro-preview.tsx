@@ -8,7 +8,7 @@ import type {
   ChordRepositionEvent,
 } from './chord-source-edit';
 import type { PdfExportProps } from './pdf-export';
-import { PreviewToolbar } from './preview-toolbar';
+import { PreviewToolbar, type ChordEditorPosition } from './preview-toolbar';
 import { RendererPreview, type PreviewFormat } from './renderer-preview';
 import { Transpose } from './transpose';
 import type { ChordDiagramInstrument, ChordDiagramOrientation } from './use-chord-diagram';
@@ -123,6 +123,10 @@ export interface ChordProPreviewProps
   chordDiagramsOff?: boolean;
   /** Forwarded to {@link PreviewToolbar} (Diagrams Off). */
   onChordDiagramsChange?: (next: ChordDiagramOrientation | 'off') => void;
+  /** Forwarded to {@link PreviewToolbar} (Chord editor Top / Bottom). */
+  chordEditorPosition?: ChordEditorPosition;
+  /** Forwarded to {@link PreviewToolbar} (Chord editor Top / Bottom). */
+  onChordEditorPositionChange?: (next: ChordEditorPosition) => void;
   /**
    * Chord audio for the sheet, forwarded to the underlying
    * {@link RendererPreview} (see `RendererPreviewProps.chordAudio`).
@@ -204,6 +208,8 @@ export function ChordProPreview({
   onChordDiagramsOrientationChange,
   chordDiagramsOff,
   onChordDiagramsChange,
+  chordEditorPosition,
+  onChordEditorPositionChange,
   chordAudio,
   chordAudioEnabled,
   onChordAudioToggle,
@@ -410,6 +416,8 @@ export function ChordProPreview({
           onChordDiagramsOrientationChange={onChordDiagramsOrientationChange}
           chordDiagramsOff={chordDiagramsOff}
           onChordDiagramsChange={onChordDiagramsChange}
+          chordEditorPosition={chordEditorPosition}
+          onChordEditorPositionChange={onChordEditorPositionChange}
           chordAudioEnabled={chordAudioEnabled}
           onChordAudioToggle={onChordAudioToggle}
         />

@@ -20,24 +20,24 @@ const SECTIONS = ['verse', 'chorus', 'bridge', 'tab', 'grid'] as const;
 /** A whole-line `{chordfont: …}` directive (or its `{cf: …}` alias). */
 const CHORD_FONT_LINE = /^[ \t]*\{[ \t]*(?:chordfont|cf)[ \t]*:([^}]*)\}[ \t]*$/gim;
 
-/** The font written when chords are switched to regular weight. */
-const REGULAR_CHORD_FONT = 'Helvetica';
+/** The font written when chords are switched to bold. */
+const BOLD_CHORD_FONT = 'Helvetica-Bold';
 
-/** Chords are bold unless the last `{chordfont}` names a non-bold font. */
+/** Chords are regular unless the last `{chordfont}` names a bold font. */
 function chordsAreBold(source: string): boolean {
   let last: string | null = null;
   for (const m of source.matchAll(CHORD_FONT_LINE)) last = m[1].trim();
-  return last === null || last === '' || /bold/i.test(last);
+  return last !== null && /bold/i.test(last);
 }
 
 /**
- * The source with chords set bold (every `{chordfont}` line removed:
- * bold is the default) or regular (one `{chordfont: Helvetica}` line
+ * The source with chords set regular (every `{chordfont}` line removed:
+ * regular is the default) or bold (one `{chordfont: Helvetica-Bold}` line
  * under the song's leading directives, such as title and key).
  */
 function withChordWeight(source: string, bold: boolean): string {
   const base = withoutLines(source, CHORD_FONT_LINE);
-  return bold ? base : withHeaderLines(base, [`{chordfont: ${REGULAR_CHORD_FONT}}`]);
+  return bold ? withHeaderLines(base, [`{chordfont: ${BOLD_CHORD_FONT}}`]) : base;
 }
 
 /**
@@ -149,7 +149,7 @@ export function InsertToolbar({ editorRef, source = '' }: InsertToolbarProps): J
         aria-label="Bold chords"
         onClick={toggleBold}
       >
-        B
+        Bold
       </button>
       <label className={`${SLUG}-insert-toolbar__colour`}>
         <span className={`${SLUG}-insert-toolbar__swatch`} aria-hidden="true" />

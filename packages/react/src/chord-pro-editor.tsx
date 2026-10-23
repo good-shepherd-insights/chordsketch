@@ -1,10 +1,11 @@
-import type { ComponentType, HTMLAttributes, ReactNode } from 'react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import type { ComponentType, CSSProperties, HTMLAttributes, ReactNode } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 
 import { ChordInspector } from './chord-inspector';
 import { ChordProPreview } from './chord-pro-preview';
 import { ChordSourceArea, type ChordSourceAreaHandle } from './chord-source-area';
 import { InsertToolbar } from './insert-toolbar';
+import type { ChordEditorPosition } from './preview-toolbar';
 import { diagramsSetting, withDiagrams } from './source-directives';
 import type { PdfExportProps } from './pdf-export';
 import type { PreviewFormat } from './renderer-preview';
@@ -129,6 +130,12 @@ export interface ChordProEditorProps
    */
   viewToggle?: boolean;
   /**
+   * The view the toggle starts on (`'split'`, `'source'` or `'preview'`).
+   * When unset it starts on Split, or on Source on narrow viewports. Only
+   * used with `viewToggle`.
+   */
+  defaultView?: EditorView;
+  /**
    * Test-only WASM loader override. Production callers never need
    * to supply this.
    *
@@ -137,8 +144,40 @@ export interface ChordProEditorProps
   wasmLoader?: ChordWasmLoader;
 }
 
+/** Where the chord editor popup position is remembered in this browser. */
+const POPUP_POSITION_KEY = `${SLUG}-chord-editor-position`;
+/** Popup width (px), and its gap to the chord and to the window edge. */
+const POPUP_WIDTH = 560;
+const POPUP_GAP = 10;
+const POPUP_EDGE = 8;
+
+/** The popup's left edge: just left of the chord, kept inside the window. */
+function popupLeft(chord: DOMRect): number {
+  const width = Math.min(POPUP_WIDTH, window.innerWidth - 2 * POPUP_EDGE);
+  return Math.max(POPUP_EDGE, Math.min(chord.left - 20, window.innerWidth - width - POPUP_EDGE));
+}
+
+/** Fixed-position style for the popup above or below the chord. */
+function popupStyle(chord: DOMRect, position: ChordEditorPosition): CSSProperties {
+  return {
+    left: popupLeft(chord),
+    width: Math.min(POPUP_WIDTH, window.innerWidth - 2 * POPUP_EDGE),
+    ...(position === 'top'
+      ? { top: chord.top - POPUP_GAP, transform: 'translateY(-100%)' }
+      : { top: chord.bottom + POPUP_GAP }),
+  };
+}
+
+/** The tip's offset inside the popup, pointing at the chord's centre and
+ * kept clear of the popup's rounded corners. */
+function tipLeft(chord: DOMRect): number {
+  const width = Math.min(POPUP_WIDTH, window.innerWidth - 2 * POPUP_EDGE);
+  const centre = chord.left + chord.width / 2 - popupLeft(chord);
+  return Math.max(16, Math.min(centre - 6, width - 28));
+}
+
 /** The panes {@link ChordProEditor}'s view toggle can show. */
-type EditorView = 'split' | 'source' | 'preview';
+export type EditorView = 'split' | 'source' | 'preview';
 const VIEWS: ReadonlyArray<{ value: EditorView; label: string }> = [
   { value: 'split', label: 'Split' },
   { value: 'source', label: 'Source' },
@@ -187,6 +226,7 @@ export function ChordProEditor({
   performanceToolbar = false,
   formats,
   viewToggle = false,
+  defaultView,
   wasmLoader,
   className,
   ...divProps
@@ -196,11 +236,12 @@ export function ChordProEditor({
   const [chordAudioEnabled, setChordAudioEnabled] = useState(false);
   // Which panes show: both, or one of them alone (viewToggle).
   const [view, setView] = useState<EditorView>(() =>
-    viewToggle &&
+    defaultView ??
+    (viewToggle &&
     typeof window !== 'undefined' &&
     window.matchMedia?.(`(max-width: ${NARROW_PX - 1}px)`).matches
       ? 'source'
-      : 'split',
+      : 'split'),
   );
   const shownView: EditorView = viewToggle ? view : 'split';
   // Source — controlled vs uncontrolled.
@@ -249,6 +290,76 @@ export function ChordProEditor({
     editorRef,
     chordAudio: performanceToolbar && chordAudioEnabled,
   });
+
+  // The chord editor opens as a popup on the selected chord in the
+  // preview, above or below it (the reader's pick, kept in this browser).
+  // With no preview on screen (Source view) it stays a strip under the
+  // panes.
+  const [popupPosition, setPopupPosition] = useState<ChordEditorPosition>(() => {
+    try {
+      return window.localStorage.getItem(POPUP_POSITION_KEY) === 'top' ? 'top' : 'bottom';
+    } catch {
+      return 'bottom';
+    }
+  });
+  const changePopupPosition = useCallback((next: ChordEditorPosition) => {
+    setPopupPosition(next);
+    try {
+      window.localStorage.setItem(POPUP_POSITION_KEY, next);
+    } catch {
+      // Storage blocked: the pick lasts for this visit only.
+    }
+  }, []);
+  const rootRef = useRef<HTMLDivElement | null>(null);
+  const [anchor, setAnchor] = useState<DOMRect | null>(null);
+  const selected = chordEditor.chordSelection != null;
+  useLayoutEffect(() => {
+    const root = rootRef.current;
+    if (!selected || !root || shownView === 'source') {
+      setAnchor(null);
+      return undefined;
+    }
+    // The selected chord's box on screen. Re-read when the sheet re-renders
+    // (the walker draws asynchronously), scrolls or resizes.
+    const measure = (): void => {
+      const chord = root.querySelector(
+        `.${SLUG}-chord-pro-editor__preview-pane .chord--selected`,
+      );
+      setAnchor(chord ? chord.getBoundingClientRect() : null);
+    };
+    measure();
+    const observer = new MutationObserver(measure);
+    observer.observe(root, { subtree: true, childList: true, attributes: true, attributeFilter: ['class'] });
+    window.addEventListener('scroll', measure, true);
+    window.addEventListener('resize', measure);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('scroll', measure, true);
+      window.removeEventListener('resize', measure);
+    };
+  }, [selected, shownView, source]);
+
+  // A click anywhere outside the popup closes it. Clicks in the preview
+  // and source panes are left to them: the preview selects the chord
+  // clicked (or deselects on a non-chord), and the source caret decides
+  // the selection there.
+  const popupRef = useRef<HTMLDivElement | null>(null);
+  const { onChordSelectionChange } = chordEditor;
+  const popupOpen = anchor != null;
+  useEffect(() => {
+    if (!popupOpen) return undefined;
+    const onPointerDown = (event: PointerEvent): void => {
+      const target = event.target as Node | null;
+      if (!target || popupRef.current?.contains(target)) return;
+      const panes = rootRef.current?.querySelectorAll(
+        `.${SLUG}-chord-pro-editor__preview-pane, .${SLUG}-chord-pro-editor__source-pane`,
+      );
+      if (panes && Array.from(panes).some((pane) => pane.contains(target))) return;
+      onChordSelectionChange(null);
+    };
+    document.addEventListener('pointerdown', onPointerDown, true);
+    return () => document.removeEventListener('pointerdown', onPointerDown, true);
+  }, [popupOpen, onChordSelectionChange]);
 
   // L4: dev-only controlled/uncontrolled flip warnings for source,
   // format, and transpose. `<ChordProPreview>` already warns for its
@@ -355,6 +466,8 @@ export function ChordProEditor({
             onChordDiagramsOrientationChange: setDiagrams,
             chordDiagramsOff: diagrams === 'off',
             onChordDiagramsChange: setDiagrams,
+            chordEditorPosition: popupPosition,
+            onChordEditorPositionChange: changePopupPosition,
             chordAudio: chordEditor.chordAudio,
             chordAudioEnabled,
             onChordAudioToggle: setChordAudioEnabled,
@@ -365,7 +478,7 @@ export function ChordProEditor({
   );
 
   return (
-    <div {...divProps} className={wrapperClass}>
+    <div {...divProps} ref={rootRef} className={wrapperClass}>
       {hasHeader ? (
         <header className={`${SLUG}-chord-pro-editor__header`}>
           {hasTitle ? (
@@ -415,10 +528,32 @@ export function ChordProEditor({
         </div>
       )}
 
-      {/* Full-width chord-editor footer spanning both panes (#2644). */}
-      <div className={`${SLUG}-chord-pro-editor__chord-footer`}>
-        <ChordInspector {...chordEditor.inspectorProps} />
-      </div>
+      {anchor ? (
+        // The chord editor as a popup on the selected chord.
+        <div
+          ref={popupRef}
+          className={`${SLUG}-chord-pro-editor__chord-footer ${SLUG}-chord-pro-editor__chord-popup ${SLUG}-chord-pro-editor__chord-popup--${popupPosition}`}
+          style={popupStyle(anchor, popupPosition)}
+        >
+          <span
+            className={`${SLUG}-chord-pro-editor__chord-popup-tip`}
+            aria-hidden="true"
+            style={{ left: tipLeft(anchor) }}
+          />
+          <ChordInspector
+            {...chordEditor.inspectorProps}
+            onClose={() => chordEditor.onChordSelectionChange(null)}
+          />
+        </div>
+      ) : shownView === 'source' || !selected ? (
+        // Full-width chord-editor footer spanning both panes (#2644), in
+        // Source view; idle elsewhere it is hidden until a chord is picked.
+        shownView === 'source' ? (
+          <div className={`${SLUG}-chord-pro-editor__chord-footer`}>
+            <ChordInspector {...chordEditor.inspectorProps} />
+          </div>
+        ) : null
+      ) : null}
     </div>
   );
 }
