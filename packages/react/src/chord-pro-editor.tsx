@@ -132,7 +132,8 @@ export interface ChordProEditorProps
   /**
    * The view the toggle starts on (`'split'`, `'source'` or `'preview'`).
    * When unset it starts on Split, or on Source on narrow viewports. Only
-   * used with `viewToggle`.
+   * used with `viewToggle`. On a narrow viewport Split is not offered (two
+   * panes do not fit side by side) and shows as Source.
    */
   defaultView?: EditorView;
   /**
@@ -188,9 +189,28 @@ const VIEWS: ReadonlyArray<{ value: EditorView; label: string }> = [
   { value: 'source', label: 'Source' },
   { value: 'preview', label: 'Preview' },
 ];
-/** Viewport width (px) below which the view toggle starts on Source alone;
- *  matches {@link SplitLayout}'s default stacking breakpoint. */
+/** Viewport width (px) below which the view toggle starts on Source alone,
+ *  drops Split, and the chord editor opens as a sheet from the bottom of the
+ *  window; matches {@link SplitLayout}'s default stacking breakpoint. */
 const NARROW_PX = 768;
+
+/** Whether the viewport is narrower than {@link NARROW_PX}, following
+ *  resizes and rotation. `false` where `matchMedia` is unavailable (SSR). */
+function useNarrowViewport(): boolean {
+  const query = `(max-width: ${NARROW_PX - 1}px)`;
+  const [narrow, setNarrow] = useState(
+    () => typeof window !== 'undefined' && window.matchMedia?.(query).matches === true,
+  );
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.matchMedia) return undefined;
+    const list = window.matchMedia(query);
+    const update = (): void => setNarrow(list.matches);
+    update();
+    list.addEventListener('change', update);
+    return () => list.removeEventListener('change', update);
+  }, [query]);
+  return narrow;
+}
 
 /**
  * Tier 3 composed editor — opinionated all-in-one ChordPro editor +
@@ -248,7 +268,10 @@ export function ChordProEditor({
       ? 'source'
       : 'split'),
   );
-  const shownView: EditorView = viewToggle ? view : 'split';
+  const narrow = useNarrowViewport();
+  // Split does not fit a narrow viewport: it is not offered there, and a
+  // Split view picked on a wider one shows as Source.
+  const shownView: EditorView = viewToggle ? (narrow && view === 'split' ? 'source' : view) : 'split';
   // Source — controlled vs uncontrolled.
   const [internalSource, setInternalSource] = useState(defaultSource);
   const isSourceControlled = sourceProp !== undefined;
@@ -316,6 +339,11 @@ export function ChordProEditor({
       // Storage blocked: the pick lasts for this visit only.
     }
   }, []);
+  // On a narrow viewport the chord editor is always a sheet from the bottom
+  // of the window: a popup under the chord or a strip as wide as the editor
+  // does not fit there, so the mode choice is hidden (the pick is kept for
+  // wider viewports).
+  const placement: ChordEditorPosition | 'sheet' = narrow ? 'sheet' : popupPosition;
   const rootRef = useRef<HTMLDivElement | null>(null);
   const [anchor, setAnchor] = useState<DOMRect | null>(null);
   const [frame, setFrame] = useState<DOMRect | null>(null);
@@ -355,7 +383,7 @@ export function ChordProEditor({
   // the selection there.
   const popupRef = useRef<HTMLDivElement | null>(null);
   const { onChordSelectionChange } = chordEditor;
-  const popupOpen = popupPosition === 'popup' ? anchor != null : selected && frame != null;
+  const popupOpen = placement === 'popup' ? anchor != null : selected && frame != null;
   useEffect(() => {
     if (!popupOpen) return undefined;
     const onPointerDown = (event: PointerEvent): void => {
@@ -480,7 +508,7 @@ export function ChordProEditor({
             chordDiagramsOff: diagrams === 'off',
             onChordDiagramsChange: setDiagrams,
             chordEditorPosition: popupPosition,
-            onChordEditorPositionChange: changePopupPosition,
+            onChordEditorPositionChange: narrow ? undefined : changePopupPosition,
             chordAudio: chordEditor.chordAudio,
             chordAudioEnabled,
             onChordAudioToggle: setChordAudioEnabled,
@@ -511,7 +539,7 @@ export function ChordProEditor({
                   role="group"
                   aria-label="View"
                 >
-                  {VIEWS.map(({ value, label }) => (
+                  {VIEWS.filter(({ value }) => !(narrow && value === 'split')).map(({ value, label }) => (
                     <button
                       key={value}
                       type="button"
@@ -542,15 +570,16 @@ export function ChordProEditor({
       )}
 
       {popupOpen ? (
-        // The chord editor for the selected chord: a popup under it, or a
-        // strip fixed to the top or bottom of the window.
+        // The chord editor for the selected chord: a popup under it, a
+        // strip fixed to the top or bottom of the window, or (narrow
+        // viewports) a sheet from the bottom, placed by CSS alone.
         <div
           ref={popupRef}
-          className={`${SLUG}-chord-pro-editor__chord-footer ${SLUG}-chord-pro-editor__chord-popup ${SLUG}-chord-pro-editor__chord-popup--${popupPosition}`}
+          className={`${SLUG}-chord-pro-editor__chord-footer ${SLUG}-chord-pro-editor__chord-popup ${SLUG}-chord-pro-editor__chord-popup--${placement}`}
           style={
-            popupPosition === 'popup' && anchor
+            placement === 'popup' && anchor
               ? popupStyle(anchor)
-              : frame
+              : placement !== 'sheet' && frame
                 ? dockStyle(frame)
                 : undefined
           }
@@ -562,7 +591,7 @@ export function ChordProEditor({
             }
           }}
         >
-          {popupPosition === 'popup' && anchor ? (
+          {placement === 'popup' && anchor ? (
             <span
               className={`${SLUG}-chord-pro-editor__chord-popup-tip`}
               aria-hidden="true"

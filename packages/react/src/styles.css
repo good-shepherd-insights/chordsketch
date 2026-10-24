@@ -2043,6 +2043,35 @@
   border-right: 0;
   border-bottom: 0;
 }
+/* Narrow viewports (ChordProEditor's NARROW_PX): the chord editor is a
+   sheet from the bottom of the window, as wide as the window, with a grab
+   bar, room for the home indicator (safe-area inset) and at most 70% of
+   the window's height, scrolling inside past that. */
+.visionschool-chord-pro-editor__chord-popup--sheet {
+  left: 0;
+  right: 0;
+  bottom: 0;
+  max-height: 70vh;
+  max-height: 70dvh;
+  overflow-y: auto;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  background: var(--cs-surface, #FFFFFF);
+  border-width: 1px 0 0;
+  border-radius: 16px 16px 0 0;
+  box-shadow: 0 -8px 24px rgba(10, 10, 11, 0.14);
+}
+.visionschool-chord-pro-editor__chord-popup--sheet::before {
+  content: "";
+  display: block;
+  width: 36px;
+  height: 4px;
+  margin: 8px auto 0;
+  border-radius: 2px;
+  background: var(--cs-border-strong, #D4D1D6);
+}
+.visionschool-chord-pro-editor__chord-popup--sheet .visionschool-sheet__cins {
+  border-radius: 0;
+}
 /* Hide the empty placeholder span the footer renders when there is no
    Remove button (idle), so it does not add a gap before Insert. */
 .visionschool-chord-pro-editor__chord-footer .visionschool-sheet__cins-footer > span:empty {
@@ -3794,5 +3823,46 @@
 @media (max-width: 900px) {
   .visionschool-ireal-pro-editor {
     grid-template-columns: 1fr;
+  }
+}
+
+/* Narrow viewports (ChordProEditor's NARROW_PX, 768px): touch-sized
+   controls. The view toggle fills its row with 44px tabs (Split is not
+   offered there); the Insert and performance toolbars each stay one row
+   that scrolls sideways, with 44px controls; the chord editor sheet's
+   controls are 44px too (Apple HIG minimum touch target). */
+@media (max-width: 767px) {
+  .visionschool-chord-pro-editor__view-toggle {
+    display: flex;
+    width: 100%;
+  }
+  .visionschool-chord-pro-editor__view-toggle > button {
+    flex: 1 1 0;
+    height: 44px;
+    font-size: 0.9375rem;
+  }
+  .visionschool-insert-toolbar,
+  .visionschool-preview-toolbar {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .visionschool-insert-toolbar > *,
+  .visionschool-preview-toolbar > * {
+    flex: none;
+  }
+  .visionschool-insert-toolbar button,
+  .visionschool-insert-toolbar select,
+  .visionschool-preview-toolbar button,
+  .visionschool-preview-toolbar select,
+  .visionschool-preview-toolbar__segmented > button,
+  .visionschool-chord-pro-editor__chord-popup--sheet button,
+  .visionschool-chord-pro-editor__chord-popup--sheet select,
+  .visionschool-chord-pro-editor__chord-popup--sheet input {
+    min-height: 44px;
+  }
+  .visionschool-chord-pro-editor__chord-popup--sheet input,
+  .visionschool-chord-pro-editor__chord-popup--sheet select {
+    font-size: 16px;
   }
 }
