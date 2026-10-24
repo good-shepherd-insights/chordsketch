@@ -187,6 +187,13 @@ export interface ChordSheetProps extends Omit<HTMLAttributes<HTMLDivElement>, 'c
    */
   chordAudioLoader?: ChordAudioWasmLoader;
   /**
+   * Called with the song's key after transposition (the wasm parse's
+   * canonical `transposedKey`, or `null` when the song sets no key)
+   * whenever it changes, so a host control can name the sounding key
+   * without parsing the song a second time.
+   */
+  onTransposedKeyChange?: (key: string | null) => void;
+  /**
    * Configuration preset name (e.g. `"guitar"`, `"ukulele"`) or an
    * inline RRJSON configuration string.
    */
@@ -360,6 +367,7 @@ export function ChordSheet({
   onChordSelectionChange,
   chordAudio,
   chordAudioLoader,
+  onTransposedKeyChange,
   className,
   ...divProps
 }: ChordSheetProps): JSX.Element {
@@ -400,6 +408,7 @@ export function ChordSheet({
       onChordSelectionChange={onChordSelectionChange}
       chordAudio={chordAudio}
       chordAudioLoader={chordAudioLoader}
+      onTransposedKeyChange={onTransposedKeyChange}
       wrapperClass={wrapperClass}
       divProps={divProps}
     />
@@ -482,6 +491,7 @@ function ChordSheetAstBranch({
   onChordSelectionChange,
   chordAudio,
   chordAudioLoader,
+  onTransposedKeyChange,
   wrapperClass,
   divProps,
 }: BranchProps & {
@@ -498,12 +508,16 @@ function ChordSheetAstBranch({
   onChordSelectionChange: ((selection: ChordSelection | null) => void) | undefined;
   chordAudio: boolean | ChordAudioConfig | null | undefined;
   chordAudioLoader: ChordAudioWasmLoader | undefined;
+  onTransposedKeyChange: ((key: string | null) => void) | undefined;
 }): JSX.Element {
   const { ast, loading, error, transposedKey, transposedKeyDirectives } = useChordproAst(
     source,
     { transpose, config },
     wasmLoader,
   );
+  useEffect(() => {
+    onTransposedKeyChange?.(transposedKey);
+  }, [transposedKey, onTransposedKeyChange]);
   const errorNode = error !== null && errorFallback !== null ? errorFallback(error) : null;
 
   // Chord-audio (#2650). The hook is always instantiated (rules of

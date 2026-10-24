@@ -23,6 +23,7 @@
 // `<IrealBarPopover>` chord-row editor.
 
 import type { JSX, KeyboardEvent as ReactKeyboardEvent } from 'react';
+import { useState } from 'react';
 
 import { ChordStaff } from './chord-staff';
 import {
@@ -123,7 +124,46 @@ export interface ChordInspectorProps {
    *
    * @internal */
   staffLoader?: ChordStaffWasmLoader;
+  /**
+   * `'sheet'`: the compact layout {@link ChordProEditor} uses for its
+   * bottom sheet on narrow viewports — a one-line header, the root notes as
+   * one row of keys, the accidentals, chord types and slash bass in one
+   * sideways-scrolling row, and move / remove in a footer row. Same edits as
+   * the panel, without the staff or the free-form fields. Defaults to the
+   * full panel.
+   */
+  layout?: 'panel' | 'sheet';
 }
+
+/** Icons for the sheet layout, drawn inline so they need no icon font. */
+const SHEET_ICON = {
+  close: 'M6 6l12 12M18 6L6 18',
+  left: 'M19 12H5M11 18l-6-6 6-6',
+  right: 'M5 12h14M13 6l6 6-6 6',
+  remove: 'M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3',
+} as const;
+
+function SheetIcon({ name, size = 22 }: { name: keyof typeof SHEET_ICON; size?: number }): JSX.Element {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path d={SHEET_ICON[name]} />
+    </svg>
+  );
+}
+
+/** Accidentals in the sheet's order (flat, sharp, natural). */
+const SHEET_ACCIDENTALS = [ACCIDENTALS[2]!, ACCIDENTALS[1]!, ACCIDENTALS[0]!] as const;
 
 /**
  * The chord-editor footer panel. Renders design-system-styled controls
@@ -171,6 +211,10 @@ export function ChordInspector(props: ChordInspectorProps): JSX.Element {
   // the bass accidental chips are inert until a bass note exists.
   const bassNote = splitBassNote(bass);
 
+  // Sheet layout: the bass picker opens under the chord-type row from its
+  // "/ Bass" button.
+  const [bassOpen, setBassOpen] = useState(false);
+
   const onKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>): void => {
     if (event.key === 'Escape' && props.onClose) {
       event.preventDefault();
@@ -198,6 +242,173 @@ export function ChordInspector(props: ChordInspectorProps): JSX.Element {
                 'Click a chord in the preview, or move the caret onto one in the editor, to edit it.'}
             </div>
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (props.layout === 'sheet') {
+    return (
+      <div
+        className={`${SLUG}-sheet__cins ${SLUG}-sheet__cins--sheet`}
+        role="group"
+        aria-label={`Edit chord ${titleName || '(empty)'}`}
+        data-mode="edit"
+        onKeyDown={onKeyDown}
+      >
+        <div className={`${SLUG}-sheet__cs-head`}>
+          <span className={`${SLUG}-sheet__cs-title`}>Editing chord {titleName || '—'}</span>
+          {props.onClose ? (
+            <button
+              type="button"
+              className={`${SLUG}-sheet__cs-close`}
+              aria-label="Close chord editor"
+              onClick={props.onClose}
+            >
+              <SheetIcon name="close" size={24} />
+            </button>
+          ) : null}
+        </div>
+        <div className={`${SLUG}-sheet__cs-roots`} role="group" aria-label="Root note">
+          {ROOT_NOTES.map((note) => (
+            <button
+              key={note}
+              type="button"
+              aria-pressed={root === note}
+              onClick={() => emit({ root: note })}
+            >
+              {note}
+            </button>
+          ))}
+        </div>
+        <div className={`${SLUG}-sheet__cs-row`} role="group" aria-label="Accidental and chord type">
+          {SHEET_ACCIDENTALS.map((acc) => (
+            <button
+              key={acc.aria}
+              type="button"
+              aria-label={acc.aria}
+              aria-pressed={accidental === acc.value}
+              onClick={() => emit({ accidental: acc.value })}
+            >
+              {acc.label}
+            </button>
+          ))}
+          {/* The major triad and "no seventh" are the defaults: pressing a
+              pressed triad or seventh goes back to them, so they need no
+              chip of their own. */}
+          {TRIAD_OPTIONS.filter((opt) => opt.value !== 'maj').map((opt) => {
+            const pressed = recognized && selection.triad === opt.value;
+            return (
+              <button
+                key={opt.value}
+                type="button"
+                aria-label={opt.value === 'min' ? 'min' : undefined}
+                aria-pressed={pressed}
+                onClick={() =>
+                  emit({ suffix: composeChordSuffix(withTriad(selection, pressed ? 'maj' : opt.value)) })
+                }
+              >
+                {opt.value === 'min' ? 'm' : opt.label}
+              </button>
+            );
+          })}
+          {SEVENTH_OPTIONS.filter((opt) => opt.value !== 'none').map((opt) => {
+            const pressed = recognized && selection.seventh === opt.value;
+            const unavailable = !isSeventhAvailable(selection.triad, opt.value);
+            return (
+              <button
+                key={opt.value}
+                type="button"
+                disabled={unavailable}
+                title={unavailable ? 'Not available for the selected triad' : undefined}
+                aria-pressed={pressed}
+                onClick={() =>
+                  emit({ suffix: composeChordSuffix(withSeventh(selection, pressed ? 'none' : opt.value)) })
+                }
+              >
+                {opt.label}
+              </button>
+            );
+          })}
+          {TENSION_OPTIONS.map((opt) => {
+            const unavailable = !isTensionAvailable(selection.triad, selection.seventh, opt.value);
+            return (
+              <button
+                key={opt.value}
+                type="button"
+                disabled={unavailable}
+                title={unavailable ? 'Not available for the selected chord type' : undefined}
+                aria-pressed={recognized && selection.tensions.includes(opt.value)}
+                onClick={() => emit({ suffix: composeChordSuffix(toggleTension(selection, opt.value)) })}
+              >
+                {opt.label}
+              </button>
+            );
+          })}
+          <button
+            type="button"
+            aria-expanded={bassOpen}
+            aria-pressed={bass !== ''}
+            onClick={() => setBassOpen((open) => !open)}
+          >
+            / {bass === '' ? 'Bass' : bass}
+          </button>
+        </div>
+        {bassOpen ? (
+          <div className={`${SLUG}-sheet__cs-row`} role="group" aria-label="Bass note">
+            <button type="button" aria-pressed={bass === ''} onClick={() => emit({ bass: '' })}>
+              None
+            </button>
+            {ROOT_NOTES.map((note) => (
+              <button
+                key={note}
+                type="button"
+                aria-pressed={bassNote?.note === note}
+                onClick={() => emit({ bass: `${note}${bassNote?.accidental ?? ''}` })}
+              >
+                {note}
+              </button>
+            ))}
+            {SHEET_ACCIDENTALS.map((acc) => (
+              <button
+                key={acc.aria}
+                type="button"
+                aria-label={`Bass ${acc.aria.toLowerCase()}`}
+                disabled={bassNote === null}
+                aria-pressed={bassNote !== null && bassNote.accidental === acc.value}
+                onClick={() => bassNote && emit({ bass: `${bassNote.note}${acc.value}` })}
+              >
+                {acc.label}
+              </button>
+            ))}
+          </div>
+        ) : null}
+        <div className={`${SLUG}-sheet__cs-foot`}>
+          <button
+            type="button"
+            className={`${SLUG}-sheet__cs-move`}
+            aria-label="Move chord left"
+            disabled={!canLeft}
+            onClick={() => props.onNudge(-1)}
+          >
+            <SheetIcon name="left" />
+          </button>
+          <button
+            type="button"
+            className={`${SLUG}-sheet__cs-move`}
+            aria-label="Move chord right"
+            disabled={!canRight}
+            onClick={() => props.onNudge(1)}
+          >
+            <SheetIcon name="right" />
+          </button>
+          <span className={`${SLUG}-sheet__cs-spacer`} />
+          {props.onRemove ? (
+            <button type="button" className={`${SLUG}-sheet__cs-remove`} onClick={props.onRemove}>
+              <SheetIcon name="remove" size={20} />
+              Remove chord
+            </button>
+          ) : null}
         </div>
       </div>
     );

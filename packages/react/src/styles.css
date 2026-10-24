@@ -2051,26 +2051,146 @@
   left: 0;
   right: 0;
   bottom: 0;
-  max-height: 70vh;
-  max-height: 70dvh;
+  max-height: 50vh;
+  max-height: 50dvh;
   overflow-y: auto;
   padding-bottom: env(safe-area-inset-bottom, 0px);
-  background: var(--cs-surface, #FFFFFF);
-  border-width: 1px 0 0;
+  background: #FFFFFF;
+  border: 0;
   border-radius: 16px 16px 0 0;
-  box-shadow: 0 -8px 24px rgba(10, 10, 11, 0.14);
+  box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.12);
 }
 .visionschool-chord-pro-editor__chord-popup--sheet::before {
   content: "";
   display: block;
   width: 36px;
   height: 4px;
-  margin: 8px auto 0;
+  margin: 10px auto 0;
   border-radius: 2px;
-  background: var(--cs-border-strong, #D4D1D6);
+  background: #D1D5DB;
 }
-.visionschool-chord-pro-editor__chord-popup--sheet .visionschool-sheet__cins {
+/* The sheet layout of <ChordInspector> (layout="sheet"). */
+.visionschool-chord-pro-editor__chord-popup--sheet .visionschool-sheet__cins--sheet {
+  gap: 10px;
+  padding: 12px 16px 20px;
   border-radius: 0;
+  color: #121212;
+}
+.visionschool-sheet__cs-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.visionschool-sheet__cs-title {
+  flex: 1;
+  min-width: 0;
+  font-size: 17px;
+  font-weight: 700;
+}
+.visionschool-sheet__cs-close {
+  width: 44px;
+  height: 44px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: #121212;
+  cursor: pointer;
+}
+.visionschool-sheet__cs-roots {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+.visionschool-sheet__cs-row {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  margin-right: -16px;
+  padding-right: 16px;
+  scrollbar-width: none;
+}
+.visionschool-sheet__cs-roots > button,
+.visionschool-sheet__cs-row > button {
+  height: 44px;
+  border: 1px solid rgba(18, 18, 18, 0.15);
+  background: #FFFFFF;
+  color: #121212;
+  font: inherit;
+  font-size: 15px;
+  cursor: pointer;
+}
+.visionschool-sheet__cs-roots > button {
+  border-radius: 8px;
+  padding: 0;
+}
+.visionschool-sheet__cs-row > button {
+  flex: none;
+  padding: 0 12px;
+  border-radius: 10px;
+}
+.visionschool-sheet__cs-roots > button[aria-pressed='true'],
+.visionschool-sheet__cs-row > button[aria-pressed='true'] {
+  background: #243472;
+  border-color: #243472;
+  color: #FFFFFF;
+}
+.visionschool-sheet__cs-row > button:disabled,
+.visionschool-sheet__cs-foot > button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.visionschool-sheet__cs-foot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.visionschool-sheet__cs-spacer {
+  flex: 1;
+}
+.visionschool-sheet__cs-move,
+.visionschool-sheet__cs-remove {
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(18, 18, 18, 0.15);
+  border-radius: 10px;
+  background: #FFFFFF;
+  font: inherit;
+  font-size: 15px;
+  cursor: pointer;
+}
+.visionschool-sheet__cs-move {
+  width: 44px;
+  padding: 0;
+  color: #121212;
+}
+.visionschool-sheet__cs-remove {
+  gap: 6px;
+  padding: 0 14px;
+  color: #B91C1C;
+}
+.visionschool-sheet__cs-roots > button:focus-visible,
+.visionschool-sheet__cs-row > button:focus-visible,
+.visionschool-sheet__cs-close:focus-visible,
+.visionschool-sheet__cs-move:focus-visible,
+.visionschool-sheet__cs-remove:focus-visible {
+  outline: 2px solid #243472;
+  outline-offset: 2px;
+}
+/* Transpose's stepper parts (<Transpose stepper>) show only on narrow
+   viewports; elsewhere the plain select keeps its place. */
+.visionschool-transpose__step,
+.visionschool-transpose__value-text {
+  display: none;
+}
+.visionschool-transpose__value {
+  display: contents;
 }
 /* Hide the empty placeholder span the footer renders when there is no
    Remove button (idle), so it does not add a gap before Insert. */
@@ -3826,24 +3946,33 @@
   }
 }
 
-/* Narrow viewports (ChordProEditor's NARROW_PX, 768px): touch-sized
-   controls. The view toggle fills its row with 44px tabs (Split is not
-   offered there); the Insert and performance toolbars each stay one row
-   that scrolls sideways, with 44px controls; the chord editor sheet's
-   controls are 44px too (Apple HIG minimum touch target). */
+/* Narrow viewports (ChordProEditor's NARROW_PX, 768px), as drawn on the
+   phone design: the view toggle is two 44px tabs filling the row (Split is
+   not offered), the selected one navy; the Insert and performance toolbars
+   are each one sideways-scrolling row of 44px bordered buttons with their
+   group labels hidden. */
 @media (max-width: 767px) {
   .visionschool-chord-pro-editor__view-toggle {
     display: flex;
     width: 100%;
+    border-color: rgba(18, 18, 18, 0.15);
+    border-radius: 10px;
   }
   .visionschool-chord-pro-editor__view-toggle > button {
     flex: 1 1 0;
     height: 44px;
-    font-size: 0.9375rem;
+    border-left-color: rgba(18, 18, 18, 0.15);
+    color: #121212;
+    font-size: 15px;
+  }
+  .visionschool-chord-pro-editor__view-toggle > button[aria-pressed='true'] {
+    background: #243472;
+    color: #FFFFFF;
   }
   .visionschool-insert-toolbar,
   .visionschool-preview-toolbar {
     flex-wrap: nowrap;
+    gap: 6px;
     overflow-x: auto;
     scrollbar-width: none;
   }
@@ -3851,18 +3980,135 @@
   .visionschool-preview-toolbar > * {
     flex: none;
   }
-  .visionschool-insert-toolbar button,
-  .visionschool-insert-toolbar select,
-  .visionschool-preview-toolbar button,
-  .visionschool-preview-toolbar select,
-  .visionschool-preview-toolbar__segmented > button,
-  .visionschool-chord-pro-editor__chord-popup--sheet button,
-  .visionschool-chord-pro-editor__chord-popup--sheet select,
-  .visionschool-chord-pro-editor__chord-popup--sheet input {
-    min-height: 44px;
+  .visionschool-insert-toolbar__label,
+  .visionschool-insert-toolbar__divider,
+  .visionschool-insert-toolbar__swatch,
+  .visionschool-preview-toolbar__label,
+  .visionschool-transpose__label,
+  .visionschool-capo__label {
+    display: none;
   }
-  .visionschool-chord-pro-editor__chord-popup--sheet input,
-  .visionschool-chord-pro-editor__chord-popup--sheet select {
-    font-size: 16px;
+  /* One look for every control in both rows. */
+  .visionschool-insert-toolbar__button,
+  .visionschool-insert-toolbar__select,
+  .visionschool-insert-toolbar__colour select,
+  .visionschool-transpose__step,
+  .visionschool-transpose__value,
+  .visionschool-capo,
+  .visionschool-preview-toolbar__group--diagrams,
+  .visionschool-preview-toolbar__audio-toggle {
+    height: 44px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 12px;
+    box-sizing: border-box;
+    border: 1px solid rgba(18, 18, 18, 0.15);
+    border-radius: 10px;
+    background: #FFFFFF;
+    color: #121212;
+    font: inherit;
+    font-size: 15px;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  /* Insert: "Chord" with a music-note icon; "B" for Bold chords. */
+  .visionschool-insert-toolbar__button > svg {
+    display: none;
+  }
+  .visionschool-insert-toolbar__button:not(.visionschool-insert-toolbar__toggle)::before {
+    content: "";
+    width: 20px;
+    height: 20px;
+    background: currentColor;
+    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 3v10.55A4 4 0 1 0 14 17V7h4V3h-6z'/%3E%3C/svg%3E") center / contain no-repeat;
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 3v10.55A4 4 0 1 0 14 17V7h4V3h-6z'/%3E%3C/svg%3E") center / contain no-repeat;
+  }
+  .visionschool-insert-toolbar__toggle {
+    font-size: 0;
+  }
+  .visionschool-insert-toolbar__toggle::before {
+    content: "B";
+    font-size: 15px;
+    font-weight: 700;
+  }
+  .visionschool-insert-toolbar__colour {
+    display: inline-flex;
+  }
+  /* Transpose: − / Key … / +, the select laid invisibly over the label. */
+  .visionschool-transpose {
+    gap: 6px;
+  }
+  .visionschool-transpose__step {
+    width: 44px;
+    justify-content: center;
+    padding: 0;
+    cursor: pointer;
+  }
+  .visionschool-transpose__step:disabled {
+    opacity: 0.45;
+  }
+  .visionschool-transpose__value {
+    position: relative;
+  }
+  .visionschool-transpose__value-text {
+    display: inline;
+  }
+  .visionschool-transpose__value > .visionschool-transpose__select {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+  }
+  /* Capo: "Capo 0 ★" as one button; its select borderless inside. */
+  .visionschool-capo .visionschool-capo__select {
+    height: auto;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  .visionschool-capo::before {
+    content: "Capo";
+  }
+  /* Diagrams: a grid icon and "Diagrams"; the select laid invisibly over
+     it opens Off / Vertical / Horizontal. */
+  .visionschool-preview-toolbar__group--diagrams {
+    position: relative;
+  }
+  .visionschool-preview-toolbar__group--diagrams::before {
+    content: "";
+    width: 20px;
+    height: 20px;
+    background: currentColor;
+    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2'%3E%3Cpath d='M4 4h16v16H4zM4 9.33h16M4 14.67h16M9.33 4v16M14.67 4v16'/%3E%3C/svg%3E") center / contain no-repeat;
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2'%3E%3Cpath d='M4 4h16v16H4zM4 9.33h16M4 14.67h16M9.33 4v16M14.67 4v16'/%3E%3C/svg%3E") center / contain no-repeat;
+  }
+  .visionschool-preview-toolbar__group--diagrams::after {
+    content: "Diagrams";
+  }
+  .visionschool-preview-toolbar__diagrams-orientation {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+  }
+  /* Audio: the toggle reads "Audio"; its full name stays for screen
+     readers. */
+  .visionschool-preview-toolbar__audio-toggle > span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+  .visionschool-preview-toolbar__audio-toggle::after {
+    content: "Audio";
   }
 }

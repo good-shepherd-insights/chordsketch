@@ -116,6 +116,9 @@ export interface PreviewToolbarProps
    * `<ChordSheet chordAudio={…}>`.
    */
   onChordAudioToggle?: (next: boolean) => void;
+  /** The sounding key after transposition (`null` when the song sets no
+   * key). Shown between the transpose steppers on narrow viewports. */
+  transposedKey?: string | null;
   /**
    * Force-show / force-hide the Audio group. Defaults to `true` when
    * `onChordAudioToggle` is provided, `false` otherwise.
@@ -255,6 +258,7 @@ export function PreviewToolbar({
   showChordDiagrams,
   chordAudioEnabled,
   onChordAudioToggle,
+  transposedKey,
   showChordAudio,
   trailing,
   className,
@@ -295,6 +299,8 @@ export function PreviewToolbar({
           min={transposeMin}
           max={transposeMax}
           label="Transpose"
+          stepper
+          keyLabel={transposedKey}
         />
       ) : null}
       {capoEnabled ? (

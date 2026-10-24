@@ -131,6 +131,8 @@ export interface RendererPreviewProps extends Omit<HTMLAttributes<HTMLDivElement
    * @internal
    */
   chordAudioLoader?: ChordAudioWasmLoader;
+  /** Forwarded to {@link ChordSheet}'s `onTransposedKeyChange`. */
+  onTransposedKeyChange?: (key: string | null) => void;
   /**
    * Optional content rendered while the wasm runtime is initialising.
    *
@@ -202,6 +204,7 @@ export function RendererPreview({
   onChordSelectionChange,
   chordAudio,
   chordAudioLoader,
+  onTransposedKeyChange,
   loadingFallback,
   errorFallback,
   wasmLoader,
@@ -256,6 +259,7 @@ export function RendererPreview({
       onChordSelectionChange={onChordSelectionChange}
       chordAudio={chordAudio}
       chordAudioLoader={chordAudioLoader}
+      onTransposedKeyChange={onTransposedKeyChange}
       loadingFallback={loadingFallback}
       errorFallback={errorFallback}
       wasmLoader={wasmLoader}

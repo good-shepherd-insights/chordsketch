@@ -264,6 +264,10 @@ export function ChordProPreview({
 
   // Transpose — controlled vs uncontrolled.
   const [internalTranspose, setInternalTranspose] = useState<number>(defaultTranspose);
+  // The sounding key after transposition, reported by the sheet, so the
+  // performance toolbar can name it (narrow viewports show it between the
+  // − / + transpose steppers).
+  const [transposedKey, setTransposedKey] = useState<string | null>(null);
   const isTransposeControlled = transposeProp !== undefined;
   const rawTransposeValue = isTransposeControlled ? transposeProp : internalTranspose;
   const handleTransposeChange = useCallback(
@@ -420,11 +424,13 @@ export function ChordProPreview({
           onChordEditorPositionChange={onChordEditorPositionChange}
           chordAudioEnabled={chordAudioEnabled}
           onChordAudioToggle={onChordAudioToggle}
+          transposedKey={transposedKey}
         />
       ) : null}
       <div className={`${SLUG}-chord-pro-preview__body`}>
         <RendererPreview
           className={`${SLUG}-chord-pro-preview__renderer`}
+          onTransposedKeyChange={setTransposedKey}
           source={source}
           transpose={transposeValue}
           format={format}

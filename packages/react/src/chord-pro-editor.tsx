@@ -601,6 +601,7 @@ export function ChordProEditor({
           <ChordInspector
             {...chordEditor.inspectorProps}
             onClose={() => chordEditor.onChordSelectionChange(null)}
+            layout={placement === 'sheet' ? 'sheet' : 'panel'}
           />
         </div>
       ) : shownView === 'source' || !selected ? (

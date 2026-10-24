@@ -2,6 +2,7 @@ import type { ChangeEvent, HTMLAttributes } from 'react';
 import { useCallback, useMemo } from 'react';
 
 import { clamp as clampValue } from './clamp';
+import { unicodeAccidentals } from './music-glyphs';
 import { SLUG } from './brand.generated';
 
 /**
@@ -57,6 +58,17 @@ export interface TransposeProps extends Omit<HTMLAttributes<HTMLDivElement>, 'on
    * inside `<option>`.
    */
   formatValue?: (value: number) => string | number;
+  /**
+   * Also render − / + step buttons and a value label (the select laid over
+   * the label, so a tap still opens the list). They are shown only on
+   * narrow viewports by `styles.css`; wider ones keep the plain select.
+   */
+  stepper?: boolean;
+  /**
+   * The sounding key, shown as "Key …" between the steppers. When it is
+   * `null` or omitted the label shows the semitone offset instead.
+   */
+  keyLabel?: string | null;
 }
 
 function defaultFormat(value: number): string {
@@ -89,6 +101,8 @@ export function Transpose({
   step = 1,
   label = 'Transpose',
   formatValue = defaultFormat,
+  stepper = false,
+  keyLabel,
   className,
   ...divProps
 }: TransposeProps): JSX.Element {
@@ -138,6 +152,21 @@ export function Transpose({
         ? label
         : 'Transpose';
 
+  const select = (
+    <select
+      className={`${SLUG}-transpose__select`}
+      value={displayValue}
+      onChange={handleSelectChange}
+      aria-label={ariaLabel}
+    >
+      {options.map((pos) => (
+        <option key={pos} value={pos}>
+          {formatValue(pos)}
+        </option>
+      ))}
+    </select>
+  );
+
   return (
     <div
       {...divProps}
@@ -150,18 +179,38 @@ export function Transpose({
           {label}
         </span>
       ) : null}
-      <select
-        className={`${SLUG}-transpose__select`}
-        value={displayValue}
-        onChange={handleSelectChange}
-        aria-label={ariaLabel}
-      >
-        {options.map((pos) => (
-          <option key={pos} value={pos}>
-            {formatValue(pos)}
-          </option>
-        ))}
-      </select>
+      {stepper ? (
+        <button
+          type="button"
+          className={`${SLUG}-transpose__step`}
+          aria-label="Transpose down"
+          disabled={options.length === 0 || displayValue <= options[options.length - 1]!}
+          onClick={() => onChange(clamp(displayValue - step))}
+        >
+          −
+        </button>
+      ) : null}
+      {stepper ? (
+        <span className={`${SLUG}-transpose__value`}>
+          <span className={`${SLUG}-transpose__value-text`} aria-hidden="true">
+            {keyLabel ? `Key ${unicodeAccidentals(keyLabel)}` : formatValue(displayValue)}
+          </span>
+          {select}
+        </span>
+      ) : (
+        select
+      )}
+      {stepper ? (
+        <button
+          type="button"
+          className={`${SLUG}-transpose__step`}
+          aria-label="Transpose up"
+          disabled={options.length === 0 || displayValue >= options[0]!}
+          onClick={() => onChange(clamp(displayValue + step))}
+        >
+          +
+        </button>
+      ) : null}
     </div>
   );
 }
