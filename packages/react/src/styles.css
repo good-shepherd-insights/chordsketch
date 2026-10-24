@@ -2069,8 +2069,14 @@
   border-radius: 2px;
   background: #D1D5DB;
 }
-/* The sheet layout of <ChordInspector> (layout="sheet"). */
+/* The sheet layout of <ChordInspector> (layout="sheet"). The popup also
+   carries the footer band's class, whose rule lays the inspector out as a
+   wrapping row; the sheet is one column. */
 .visionschool-chord-pro-editor__chord-popup--sheet .visionschool-sheet__cins--sheet {
+  flex-direction: column;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  min-height: 0;
   gap: 10px;
   padding: 12px 16px 20px;
   border-radius: 0;
@@ -2128,6 +2134,7 @@
 }
 .visionschool-sheet__cs-row > button {
   flex: none;
+  min-width: 44px;
   padding: 0 12px;
   border-radius: 10px;
 }
