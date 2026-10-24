@@ -2110,8 +2110,6 @@
   display: flex;
   gap: 6px;
   overflow-x: auto;
-  margin-right: -16px;
-  padding-right: 16px;
   scrollbar-width: none;
 }
 .visionschool-sheet__cs-roots > button,
@@ -4110,5 +4108,17 @@
   }
   .visionschool-preview-toolbar__audio-toggle::after {
     content: "Audio";
+  }
+  /* A tappable chord name in the song is only as big as its letters;
+     an invisible box at least 44px square, centred on it, takes the tap
+     without moving the chord or the lyrics. */
+  .visionschool-sheet__content .chord[role='button']::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: max(44px, 100%);
+    height: 44px;
+    transform: translate(-50%, -50%);
   }
 }
